@@ -1,0 +1,16 @@
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: fotoyu-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: fotoyu
+      MONGO_INITDB_ROOT_PASSWORD: fotoyu_password
+      MONGO_INITDB_DATABASE: fotoyu
+    volumes:
+      - mongodb_data:/data/db
+    command: mongod --quiet
+
+volumes:
+  mongodb_data:
