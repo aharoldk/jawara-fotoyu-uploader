@@ -1,9 +1,15 @@
 const { findCustomerByUsername } = require('../repositories/customerRepository');
 const { sign } = require('../utils/jwt');
+const { comparePassword } = require('../utils/password');
 
 async function loginCustomer(username, password) {
     const customer = await findCustomerByUsername(username);
-    if (!customer || customer.password !== password) {
+    if (!customer) {
+        throw new Error('Invalid credentials');
+    }
+
+    const isPasswordValid = await comparePassword(password, customer.password);
+    if (!isPasswordValid) {
         throw new Error('Invalid credentials');
     }
 

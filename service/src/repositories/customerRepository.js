@@ -1,20 +1,38 @@
 const Customer = require('../models/customer');
+const { hashPassword, getDefaultPasswordHash } = require('../utils/password');
 
 async function findCustomerByUsername(username) {
     return await Customer.findOne({ username });
 }
 
 async function findCustomerById(id) {
-    return await Customer.findById(id);
+    return await Customer.findById(id).select('-password');
 }
 
 async function createCustomer(customerData) {
     const customer = new Customer(customerData);
-    return await customer.save();
+
+    customer.password = await getDefaultPasswordHash();
+
+    await customer.save();
+
+    return Customer.findById(customer._id).select('-password');
 }
 
 async function updateCustomer(id, customerData) {
-    return await Customer.findByIdAndUpdate(id, customerData, { new: true });
+    // Hash password if provided and not empty
+    if (customerData.password && customerData.password.trim() !== '') {
+        customerData.password = await hashPassword(customerData.password);
+    } else {
+        // Remove password from update if it's empty
+        delete customerData.password;
+    }
+
+    return await Customer.findByIdAndUpdate(
+        id,
+        customerData,
+        { new: true, runValidators: true }
+    ).select('-password');
 }
 
 async function deleteCustomer(id) {
@@ -22,7 +40,15 @@ async function deleteCustomer(id) {
 }
 
 async function findAllCustomers() {
-    return await Customer.find({});
+    return await Customer.find({}).select('-password').sort({ createdAt: -1 });
+}
+
+async function updateSubscription(id, subscriptionExpiredAt) {
+    return await Customer.findByIdAndUpdate(
+        id,
+        { subscriptionExpiredAt },
+        { new: true }
+    ).select('-password');
 }
 
 module.exports = {
@@ -32,5 +58,6 @@ module.exports = {
     updateCustomer,
     deleteCustomer,
     findAllCustomers,
+    updateSubscription,
 };
 

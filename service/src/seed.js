@@ -3,6 +3,7 @@ const { connectDB, disconnectDB } = require('./db');
 const User = require('./models/user');
 const Customer = require('./models/customer');
 const HistorySubscription = require('./models/historySubscription');
+const { hashPassword } = require('./utils/password');
 
 async function seed() {
   await connectDB();
@@ -12,27 +13,27 @@ async function seed() {
   await Customer.deleteMany({});
   await HistorySubscription.deleteMany({});
 
-  // Seed users
+  // Seed users with hashed passwords
   const users = await User.insertMany([
     {
       username: 'admin',
-      password: 'admin123', // Use hashed passwords in production
+      password: await hashPassword('admin123'),
       createdAt: new Date(),
       updatedAt: new Date()
     },
     {
       username: 'user1',
-      password: 'user123',
+      password: await hashPassword('user123'),
       createdAt: new Date(),
       updatedAt: new Date()
     }
   ]);
 
-  // Seed customers
+  // Seed customers with hashed passwords
   const customers = await Customer.insertMany([
     {
       username: 'customer1',
-      password: 'cust123',
+      password: await hashPassword('cust123'),
       city: 'Jakarta',
       whatsapp: '08123456789',
       price: 150000,
@@ -44,7 +45,7 @@ async function seed() {
     },
     {
       username: 'customer2',
-      password: 'cust456',
+      password: await hashPassword('cust456'),
       city: 'Bandung',
       whatsapp: '08234567890',
       price: 200000,

@@ -1,7 +1,18 @@
 const User = require('../models/user');
+const { comparePassword } = require('../utils/password');
 
 async function findUserByUsernameAndPassword(username, password) {
-    return await User.findOne({ username, password });
+    const user = await User.findOne({ username });
+    if (!user) {
+        return null;
+    }
+
+    const isPasswordValid = await comparePassword(password, user.password);
+    if (!isPasswordValid) {
+        return null;
+    }
+
+    return user;
 }
 
 async function findUserById(id) {
