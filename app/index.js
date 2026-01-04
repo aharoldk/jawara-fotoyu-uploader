@@ -132,7 +132,7 @@ const router = {
         return `
             <div class="upload-page">
                 <div class="header">
-                    <h1>Fotoyu Upload</h1>
+                    <h1>Fotoyu Bot Uploader</h1>
                     <div class="user-info">
                         <span class="user-name">${customer.username || 'User'}</span>
                         <button class="logout-btn" id="logout-btn">Logout</button>
@@ -140,22 +140,66 @@ const router = {
                 </div>
 
                 <div class="container">
-                    <div class="upload-section">
-                        <h2>Upload Photos</h2>
-                        
-                        <div class="upload-area" id="upload-area">
-                            <div class="upload-icon">📁</div>
-                            <div class="upload-text">Click to select files or drag and drop</div>
-                            <div class="upload-hint">Support for multiple image files (JPG, PNG, GIF)</div>
+                    <div class="panel">
+                        <label>👤 Username</label>
+                        <input id="username" type="text" placeholder="Enter username" value="${customer.username || ''}" readonly />
+                    </div>
+
+                    <div class="panel">
+                        <label>📂 Select Folder</label>
+                        <button id="selectFolder">📁 Choose Folder</button>
+                        <div id="folderPath"></div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="panel">
+                            <label>🎬 Content Type</label>
+                            <select id="contentType">
+                                <option value="Photo">📸 Photo</option>
+                                <option value="Video">🎥 Video</option>
+                            </select>
                         </div>
 
-                        <input type="file" id="file-input" multiple accept="image/*">
+                        <div class="panel">
+                            <label>📦 Batch Size</label>
+                            <input id="batchSize" type="number" value="500" min="1" />
+                        </div>
+                    </div>
 
-                        <div class="file-list" id="file-list"></div>
+                    <div class="panel">
+                        <label>💰 Harga <span style="color: #ff6b6b;">*</span></label>
+                        <input id="harga" type="number" placeholder="Enter harga" value="${customer.price || ''}" required />
+                    </div>
 
-                        <button class="upload-btn" id="upload-btn" disabled>Upload Photos</button>
+                    <div class="panel">
+                        <label>📍 Lokasi <span style="color: #adb5bd; font-size: 12px;">(optional)</span></label>
+                        <input id="lokasi" type="text" placeholder="Enter lokasi" value="${customer.location || ''}" />
+                    </div>
 
-                        <div class="status-message" id="status-message"></div>
+                    <div class="panel">
+                        <label>📅 Tanggal <span style="color: #adb5bd; font-size: 12px;">(optional)</span></label>
+                        <input id="tanggal" type="date" />
+                    </div>
+
+                    <div class="panel">
+                        <label>📝 Deskripsi <span style="color: #adb5bd; font-size: 12px;">(optional)</span></label>
+                        <input id="deskripsi" type="text" placeholder="Enter deskripsi" value="${customer.description || ''}" />
+                    </div>
+
+                    <div class="panel">
+                        <label>🌳 FotoTree <span style="color: #adb5bd; font-size: 12px;">(optional)</span></label>
+                        <input id="fototree-search" type="text" placeholder="Search for FotoTree..." />
+                        <div id="fototree-results"></div>
+                        <input id="fototree" type="hidden" />
+                    </div>
+
+                    <div class="panel">
+                        <button id="startBtn">▶ Start Upload</button>
+                    </div>
+
+                    <div class="panel">
+                        <h3 style="margin-bottom: 16px; color: #495057; font-size: 16px; font-weight: 700;">📊 Logs</h3>
+                        <div id="logs"></div>
                     </div>
                 </div>
             </div>
@@ -229,194 +273,216 @@ const router = {
 
     // Upload Page Logic
     initUploadPage() {
-        this.selectedFiles = [];
+        this.selectedFolder = null;
+        this.searchTimeout = null; // For debouncing
 
-        const uploadArea = document.getElementById('upload-area');
-        const fileInput = document.getElementById('file-input');
-        const fileList = document.getElementById('file-list');
-        const uploadBtn = document.getElementById('upload-btn');
-        const statusMessage = document.getElementById('status-message');
         const logoutBtn = document.getElementById('logout-btn');
+        const selectFolderBtn = document.getElementById('selectFolder');
+        const startBtn = document.getElementById('startBtn');
+        const fototreeSearch = document.getElementById('fototree-search');
+
+        // Listen for bot logs from main process
+        const { ipcRenderer } = require('electron');
+        ipcRenderer.on('bot-log', (event, { message, type }) => {
+            this.log(message, type);
+        });
 
         // Logout
         logoutBtn.addEventListener('click', () => {
             this.logout();
         });
 
-        // Click to select files
-        uploadArea.addEventListener('click', () => {
-            fileInput.click();
+        // Select Folder (Note: Browser-based file selection is limited, we'll use file input)
+        selectFolderBtn.addEventListener('click', () => {
+            this.selectFolder();
         });
 
-        // File input change
-        fileInput.addEventListener('change', (e) => {
-            this.handleFiles(e.target.files);
+        // Start Upload
+        startBtn.addEventListener('click', () => {
+            this.startUpload();
         });
 
-        // Drag and drop
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragover');
-        });
+        // FotoTree Search with debouncing
+        if (fototreeSearch) {
+            fototreeSearch.addEventListener('input', () => {
+                clearTimeout(this.searchTimeout);
+                this.searchTimeout = setTimeout(async () => {
+                    const searchTerm = fototreeSearch.value;
+                    if (searchTerm.length < 3) {
+                        const resultsDiv = document.getElementById('fototree-results');
+                        resultsDiv.innerHTML = '';
+                        resultsDiv.style.display = 'none';
+                        return;
+                    }
 
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
-        });
-
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
-            this.handleFiles(e.dataTransfer.files);
-        });
-
-        // Upload button
-        uploadBtn.addEventListener('click', () => {
-            this.uploadFiles();
-        });
+                    await this.searchFotoTree(searchTerm);
+                }, 300); // Debounce to avoid excessive API calls
+            });
+        }
     },
 
-    handleFiles(files) {
-        const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+    async selectFolder() {
+        try {
+            // Use Electron's native folder picker
+            const { ipcRenderer } = require('electron');
+            const result = await ipcRenderer.invoke('select-folder');
 
-        if (imageFiles.length === 0) {
-            this.showStatus('Please select image files only', 'error');
+            if (result.success && result.folderPath) {
+                this.selectedFolder = result.folderPath;
+
+                const folderPath = document.getElementById('folderPath');
+                const folderName = result.folderPath.split('/').pop() || result.folderPath.split('\\').pop();
+                folderPath.textContent = `Selected: ${folderName}`;
+
+                this.log(`Folder selected: ${result.folderPath}`);
+            }
+        } catch (error) {
+            console.error('Error selecting folder:', error);
+            this.log('Error selecting folder', 'error');
+        }
+    },
+
+    async startUpload() {
+        const contentType = document.getElementById('contentType').value;
+        const batchSize = parseInt(document.getElementById('batchSize').value) || 500;
+        const harga = document.getElementById('harga').value;
+        const lokasi = document.getElementById('lokasi').value;
+        const tanggal = document.getElementById('tanggal').value;
+        const deskripsi = document.getElementById('deskripsi').value;
+        const fototree = document.getElementById('fototree').value;
+
+        // Validation
+        if (!harga) {
+            this.log('Error: Harga is required', 'error');
+            alert('Please enter Harga');
             return;
         }
 
-        this.selectedFiles = [...this.selectedFiles, ...imageFiles];
-        this.updateFileList();
-        this.updateUploadButton();
-    },
-
-    updateFileList() {
-        const fileList = document.getElementById('file-list');
-        fileList.innerHTML = '';
-
-        this.selectedFiles.forEach((file, index) => {
-            const fileItem = document.createElement('div');
-            fileItem.className = 'file-item';
-
-            fileItem.innerHTML = `
-                <div class="file-info">
-                    <div class="file-icon">🖼️</div>
-                    <div class="file-details">
-                        <div class="file-name">${file.name}</div>
-                        <div class="file-size">${this.formatFileSize(file.size)}</div>
-                    </div>
-                </div>
-                <div class="file-actions">
-                    <button class="btn btn-danger" data-index="${index}">Remove</button>
-                </div>
-            `;
-
-            // Add event listener to remove button
-            const removeBtn = fileItem.querySelector('.btn-danger');
-            removeBtn.addEventListener('click', () => {
-                this.removeFile(index);
-            });
-
-            fileList.appendChild(fileItem);
-        });
-    },
-
-    removeFile(index) {
-        this.selectedFiles.splice(index, 1);
-        this.updateFileList();
-        this.updateUploadButton();
-    },
-
-    updateUploadButton() {
-        const uploadBtn = document.getElementById('upload-btn');
-        if (uploadBtn) {
-            uploadBtn.disabled = this.selectedFiles.length === 0;
+        if (!this.selectedFolder) {
+            this.log('Error: No folder selected', 'error');
+            alert('Please select a folder first');
+            return;
         }
-    },
 
-    formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-    },
-
-    showStatus(message, type) {
-        const statusMessage = document.getElementById('status-message');
-        if (statusMessage) {
-            statusMessage.textContent = message;
-            statusMessage.className = `status-message ${type} show`;
-
-            setTimeout(() => {
-                statusMessage.className = 'status-message';
-            }, 5000);
-        }
-    },
-
-    async uploadFiles() {
-        if (this.selectedFiles.length === 0) return;
-
-        const uploadBtn = document.getElementById('upload-btn');
-        const fileInput = document.getElementById('file-input');
-        const token = localStorage.getItem('token');
         const customer = JSON.parse(localStorage.getItem('customer') || '{}');
 
-        uploadBtn.disabled = true;
-        uploadBtn.textContent = 'Uploading...';
+        this.log(`Starting upload bot...`);
+        this.log(`Content Type: ${contentType}, Harga: ${harga}, Batch Size: ${batchSize}`);
+
+        const startBtn = document.getElementById('startBtn');
+        startBtn.disabled = true;
+        startBtn.textContent = '⏸ Uploading...';
 
         try {
-            // Create FormData
-            const formData = new FormData();
-            this.selectedFiles.forEach(file => {
-                formData.append('photos', file);
+            const { ipcRenderer } = require('electron');
+
+            // Run the bot automation
+            const result = await ipcRenderer.invoke('run-bot', {
+                username: customer.username,
+                contentType: contentType,
+                folderPath: this.selectedFolder,
+                batchSize: batchSize,
+                harga: harga,
+                lokasi: lokasi,
+                tanggal: tanggal,
+                deskripsi: deskripsi,
+                fototree: fototree
             });
 
-            // Add customer info
-            formData.append('customerId', customer.id);
-            formData.append('customerName', customer.username);
+            if (result.success) {
+                this.log(`Upload completed successfully! Total: ${result.totalFiles} files`, 'success');
 
-            // Upload
-            const response = await fetch(`${API_URL}/upload`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: formData,
-            });
-
-            if (response.status === 401) {
-                const error = await response.json();
-                if (error.code === 'SESSION_EXPIRED') {
-                    // Session expired - another device logged in
-                    alert('Your session has been terminated because you logged in from another device. Please login again.');
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('customer');
-                    this.navigate('login');
-                    return;
-                }
-                throw new Error('Unauthorized');
+                // Reset form
+                this.selectedFolder = null;
+                document.getElementById('folderPath').textContent = '';
+                document.getElementById('harga').value = '';
+                document.getElementById('lokasi').value = '';
+                document.getElementById('tanggal').value = '';
+                document.getElementById('deskripsi').value = '';
+            } else {
+                this.log(`Upload failed: ${result.error}`, 'error');
+                alert(`Upload failed: ${result.error}`);
             }
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || 'Upload failed');
-            }
-
-            const result = await response.json();
-
-            this.showStatus(`Successfully uploaded ${this.selectedFiles.length} photo(s)!`, 'success');
-
-            // Clear files
-            this.selectedFiles = [];
-            this.updateFileList();
-            fileInput.value = '';
 
         } catch (error) {
             console.error('Upload error:', error);
-            this.showStatus(error.message || 'Upload failed. Please try again.', 'error');
+            this.log(`Upload failed: ${error.message}`, 'error');
+            alert(`Upload failed: ${error.message}`);
         } finally {
-            uploadBtn.disabled = false;
-            uploadBtn.textContent = 'Upload Photos';
-            this.updateUploadButton();
+            startBtn.disabled = false;
+            startBtn.textContent = '▶ Start Upload';
+        }
+    },
+
+    log(message, type = 'info') {
+        const logsDiv = document.getElementById('logs');
+        if (!logsDiv) return;
+
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = document.createElement('div');
+        logEntry.className = `log-entry log-${type}`;
+        logEntry.textContent = `[${timestamp}] ${message}`;
+
+        logsDiv.appendChild(logEntry);
+        logsDiv.scrollTop = logsDiv.scrollHeight;
+    },
+
+    async searchFotoTree(query) {
+        const resultsDiv = document.getElementById('fototree-results');
+        const fototreeInput = document.getElementById('fototree');
+
+        if (!resultsDiv) return;
+
+        if (!query || query.length < 3) {
+            resultsDiv.innerHTML = '';
+            resultsDiv.style.display = 'none';
+            return;
+        }
+
+        try {
+            // Show loading state
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = '<div class="fototree-item" style="color: #adb5bd;">Searching...</div>';
+
+            const response = await fetch(`https://api.fotoyu.com/tree/v1/trees/search?page=1&limit=20&name=${encodeURIComponent(query)}&is_upload=true`);
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch FotoTree results');
+            }
+
+            const data = await response.json();
+
+            resultsDiv.innerHTML = '';
+
+            // Check if we have results - the API returns an array directly in "result"
+            const results = data.result || data.data || [];
+
+            if (results.length > 0) {
+                results.forEach(item => {
+                    const resultItem = document.createElement('div');
+                    resultItem.classList.add('fototree-item');
+                    resultItem.textContent = item.name;
+                    resultItem.style.cursor = 'pointer';
+
+                    resultItem.addEventListener('click', () => {
+                        const fototreeSearch = document.getElementById('fototree-search');
+                        fototreeSearch.value = item.name;
+                        fototreeInput.value = item.id; // Store the ID for the bot
+                        resultsDiv.innerHTML = '';
+                        resultsDiv.style.display = 'none';
+
+                        // Log for debugging
+                        console.log('Selected FotoTree:', { name: item.name, id: item.id });
+                    });
+
+                    resultsDiv.appendChild(resultItem);
+                });
+            } else {
+                resultsDiv.innerHTML = '<div class="fototree-item" style="color: #6c757d;">No results found</div>';
+            }
+        } catch (error) {
+            console.error('Error fetching FotoTree:', error);
+            resultsDiv.innerHTML = '<div class="fototree-item" style="color: #ff6b6b;">Error fetching results. Please try again.</div>';
         }
     },
 

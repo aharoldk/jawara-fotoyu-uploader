@@ -1,5 +1,6 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
+const { runBot } = require('./bot');
 require('dotenv').config();
 
 // Enable hot-reload in development
@@ -64,5 +65,23 @@ ipcMain.handle('execute-script', async (event, script) => {
 
 ipcMain.handle('get-url', async (event) => {
     return mainWindow.webContents.getURL();
+});
+
+// IPC handler for selecting folder
+ipcMain.handle('select-folder', async (event) => {
+    const result = await dialog.showOpenDialog(mainWindow, {
+        properties: ['openDirectory']
+    });
+
+    if (result.canceled) {
+        return { success: false };
+    }
+
+    return { success: true, folderPath: result.filePaths[0] };
+});
+
+// IPC handler for running the bot
+ipcMain.handle('run-bot', async (event, params) => {
+    return await runBot(params, mainWindow);
 });
 
