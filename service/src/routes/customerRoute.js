@@ -31,6 +31,46 @@ async function logoutCustomer(request, h) {
     return { message: 'Logged out successfully' };
 }
 
+async function validateCustomerSession(request, h) {
+    const authHeader = request.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return h.response({
+            valid: false,
+            message: 'No token provided'
+        }).code(200);
+    }
+
+    const token = authHeader.substring(7);
+    const { verify } = require('../utils/jwt');
+    const { validateSession } = require('../repositories/sessionRepository');
+
+    // Verify JWT
+    const decoded = verify(token);
+    if (!decoded || decoded.role !== 'customer') {
+        return h.response({
+            valid: false,
+            message: 'Invalid token'
+        }).code(200);
+    }
+
+    // Validate session
+    const session = await validateSession(token);
+    if (!session) {
+        return h.response({
+            valid: false,
+            message: 'Session expired or invalid',
+            code: 'SESSION_EXPIRED'
+        }).code(200);
+    }
+
+    return {
+        valid: true,
+        message: 'Session is valid',
+        customerId: decoded.id
+    };
+}
+
 async function getAllCustomers(request, h) {
     const customers = await findAllCustomers();
     return { customers };
@@ -140,6 +180,12 @@ module.exports = [
         method: 'POST',
         path: '/api/customers/logout',
         handler: preHandler(logoutCustomer),
+    },
+    // Public validate session endpoint
+    {
+        method: 'POST',
+        path: '/api/customers/validate-session',
+        handler: preHandler(validateCustomerSession),
     },
     // Admin CRUD endpoints
     {
