@@ -1,8 +1,9 @@
 const { findCustomerByUsername } = require('../repositories/customerRepository');
 const { sign } = require('../utils/jwt');
 const { comparePassword } = require('../utils/password');
+const { createSession } = require('../repositories/sessionRepository');
 
-async function loginCustomer(username, password) {
+async function loginCustomer(username, password, deviceInfo = null, ipAddress = null) {
     const customer = await findCustomerByUsername(username);
     if (!customer) {
         throw new Error('Invalid credentials');
@@ -14,6 +15,9 @@ async function loginCustomer(username, password) {
     }
 
     const token = sign({ id: customer._id, role: 'customer' });
+
+    // Create session and invalidate all other sessions
+    await createSession(customer._id, token, deviceInfo, ipAddress);
 
     // Return token and customer details (exclude password)
     const customerDetails = {

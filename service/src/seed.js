@@ -3,6 +3,7 @@ const { connectDB, disconnectDB } = require('./db');
 const User = require('./models/user');
 const Customer = require('./models/customer');
 const HistorySubscription = require('./models/historySubscription');
+const Session = require('./models/session');
 const { hashPassword } = require('./utils/password');
 
 async function seed() {
@@ -12,6 +13,7 @@ async function seed() {
   await User.deleteMany({});
   await Customer.deleteMany({});
   await HistorySubscription.deleteMany({});
+  await Session.deleteMany({});
 
   // Seed users with hashed passwords
   const users = await User.insertMany([

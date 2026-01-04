@@ -1,7 +1,8 @@
 const Joi = require('joi');
 const preHandler = require('../utils/preHandler');
-const { authMiddleware } = require('../utils/authMiddleware');
+const { authMiddleware, customerAuthMiddleware } = require('../utils/authMiddleware');
 const customerService = require('../services/customerService');
+const { invalidateSession } = require('../repositories/sessionRepository');
 const {
     findAllCustomers,
     findCustomerById,
@@ -14,8 +15,20 @@ const {
 
 async function loginCustomer(request, h) {
     const payload = request.payload;
+    const deviceInfo = request.headers['user-agent'] || 'Unknown Device';
+    const ipAddress = request.info.remoteAddress || 'Unknown IP';
 
-    return customerService.loginCustomer(payload.username, payload.password);
+    return customerService.loginCustomer(payload.username, payload.password, deviceInfo, ipAddress);
+}
+
+async function logoutCustomer(request, h) {
+    const authHeader = request.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.substring(7);
+        await invalidateSession(token);
+    }
+
+    return { message: 'Logged out successfully' };
 }
 
 async function getAllCustomers(request, h) {
@@ -74,6 +87,15 @@ async function updateCustomerSubscription(request, h) {
     return { customer, message: 'Subscription updated successfully' };
 }
 
+async function invalidateCustomerSession(request, h) {
+    const { id } = request.params;
+    const { invalidateAllSessions } = require('../repositories/sessionRepository');
+
+    await invalidateAllSessions(id);
+
+    return { message: 'Customer session(s) invalidated successfully' };
+}
+
 const customerValidation = Joi.object({
     username: Joi.string().required(),
     city: Joi.string().allow('', null).optional(),
@@ -112,6 +134,12 @@ module.exports = [
             },
         },
         handler: preHandler(loginCustomer),
+    },
+    // Public logout endpoint
+    {
+        method: 'POST',
+        path: '/api/customers/logout',
+        handler: preHandler(logoutCustomer),
     },
     // Admin CRUD endpoints
     {
@@ -162,7 +190,7 @@ module.exports = [
     },
     {
         method: 'PATCH',
-        path: '/api/customers/{id}/subscription',
+        path: '/api/admin/customers/{id}/subscription',
         options: {
             pre: [{ method: authMiddleware }],
             validate: {
@@ -170,6 +198,14 @@ module.exports = [
             },
         },
         handler: preHandler(updateCustomerSubscription),
+    },
+    {
+        method: 'POST',
+        path: '/api/admin/customers/{id}/invalidate-session',
+        options: {
+            pre: [{ method: authMiddleware }],
+        },
+        handler: preHandler(invalidateCustomerSession),
     },
 ];
 
