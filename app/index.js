@@ -236,21 +236,12 @@ const router = {
                     </div>
 
                     <div class="panel">
-                        <label>Lokasi <span style="color: #e53e3e; font-size: 12px;">(required: at least one of Lokasi or FotoTree)</span></label>
-                        <input id="lokasi" type="text" placeholder="lat: -6.187377 lng: 106.847112" />
-                        <p style="color: #718096; font-size: 12px; margin-top: 8px;">
-                            Format: <code style="background: #f7fafc; padding: 2px 6px; border-radius: 3px;">lat: -6.187377 lng: 106.847112</code> or <code style="background: #f7fafc; padding: 2px 6px; border-radius: 3px;">Lat: -6.175372 Lng: 106.827194</code>
-                        </p>
-                    </div>
-
-
-                    <div class="panel">
                         <label>Deskripsi <span style="color: #a0aec0; font-size: 12px;">(optional)</span></label>
                         <input id="deskripsi" type="text" placeholder="Enter deskripsi" value="${customer.description || ''}" />
                     </div>
 
                     <div class="panel">
-                        <label>FotoTree <span style="color: #e53e3e; font-size: 12px;">(required: at least one of Lokasi or FotoTree)</span></label>
+                        <label>FotoTree <span style="color: #e53e3e;">*</span></label>
                         <input id="fototree-search" type="text" placeholder="Type to search FotoTree..." />
                         <div id="fototree-results"></div>
                         <input id="fototree" type="hidden" />
@@ -482,7 +473,6 @@ const router = {
         const contentType = document.getElementById('contentType').value;
         const batchSize = parseInt(document.getElementById('batchSize').value) || 500;
         const harga = document.getElementById('harga').value;
-        const lokasi = document.getElementById('lokasi').value;
         const deskripsi = document.getElementById('deskripsi').value;
         const fototree = document.getElementById('fototree').value;
         const fotoyuPassword = document.getElementById('password-fotoyu').value;
@@ -494,7 +484,56 @@ const router = {
         this.log('Validating session...', 'info');
         await this.validateSession();
 
-        // ...existing validation code...
+        // Check if session is still valid after validation
+        const token = localStorage.getItem('token');
+        if (!token) {
+            this.log('Error: Session expired or invalid', 'error');
+            alert('Your session has expired. Please login again.');
+            this.navigate('login');
+            return;
+        }
+
+        // Validation
+        if (!harga) {
+            this.log('Error: Harga is required', 'error');
+            alert('Please enter Harga');
+            return;
+        }
+
+        if (!fotoyuPassword) {
+            this.log('Error: Fotoyu password is required', 'error');
+            alert('Please enter your Fotoyu password');
+            return;
+        }
+
+        // Validate that FotoTree is filled
+        if (!fototree) {
+            this.log('Error: FotoTree is required', 'error');
+            alert('Please select a FotoTree');
+            return;
+        }
+
+        // Validate that if user typed in FotoTree search but didn't select from dropdown
+        const fototreeSearch = document.getElementById('fototree-search').value;
+        if (fototreeSearch && !fototree) {
+            this.log('Error: Please select a FotoTree from the dropdown list', 'error');
+            alert('Please select a FotoTree from the dropdown list (don\'t just type, you must click on a result)');
+            return;
+        }
+
+        // Validate batch size based on content type
+        const maxBatchSize = contentType === 'Photo' ? 2000 : 50;
+        if (batchSize > maxBatchSize) {
+            this.log(`Error: Batch size exceeds maximum for ${contentType}`, 'error');
+            alert(`Batch size for ${contentType} cannot exceed ${maxBatchSize}. Please enter a smaller batch size.`);
+            return;
+        }
+
+        if (!this.selectedFolder) {
+            this.log('Error: No folder selected', 'error');
+            alert('Please select a folder first');
+            return;
+        }
 
         const customer = JSON.parse(localStorage.getItem('customer') || '{}');
 
@@ -522,7 +561,6 @@ const router = {
                 folderPath: this.selectedFolder,
                 batchSize: batchSize,
                 harga: harga,
-                lokasi: lokasi,
                 deskripsi: deskripsi,
                 fototree: fototree
             });

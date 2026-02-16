@@ -292,24 +292,6 @@ async function fillFotoTree(page, fototree, log) {
     log(`✓ FotoTree selected: ${fototree}`);
 }
 
-/**
- * Fill location field
- */
-async function fillLocation(page, lokasi, log) {
-    if (!lokasi) return;
-
-    log('Setting location (lokasi)...');
-    const lokasiInput = page.locator('input[placeholder*="Tambahkan Lokasi"], input[name*="lokais"]').first();
-    if (await lokasiInput.count() > 0) {
-        await lokasiInput.clear();
-        await lokasiInput.fill(lokasi);
-        log(`Location set to: ${lokasi}`);
-    } else {
-        log('Location input not found (may not be available on this form)', 'warning');
-    }
-}
-
-
 
 /**
  * Close age warning modal if it appears
@@ -374,7 +356,6 @@ async function fillMetadata(page, metadata, log) {
     await fillPrice(page, metadata.harga, log);
     await fillDescription(page, metadata.deskripsi, log);
     await fillFotoTree(page, metadata.fototree, log);
-    await fillLocation(page, metadata.lokasi, log);
 
     log('Metadata filled successfully');
 }
@@ -497,7 +478,6 @@ async function processAllBatches(page, params, log, isCancelled) {
         contentType,
         batchSize,
         harga,
-        lokasi,
         deskripsi,
         fototree
     } = params;
@@ -510,7 +490,7 @@ async function processAllBatches(page, params, log, isCancelled) {
     log(`Found ${files.length} ${contentType.toLowerCase()} files to upload`);
 
     // Prepare metadata
-    const metadata = { harga, lokasi, deskripsi, fototree };
+    const metadata = { harga, deskripsi, fototree };
 
     // Process all batches
     const totalBatches = Math.ceil(files.length / batchSize);
