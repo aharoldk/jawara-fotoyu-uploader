@@ -169,11 +169,6 @@ const router = {
                                 </div>
                                 
                                 <div class="form-group">
-                                    <label>Location</label>
-                                    <input type="text" id="profile-location" value="${customer.location || ''}" />
-                                </div>
-                                
-                                <div class="form-group">
                                     <label>Description</label>
                                     <input type="text" id="profile-description" value="${customer.description || ''}" />
                                 </div>
