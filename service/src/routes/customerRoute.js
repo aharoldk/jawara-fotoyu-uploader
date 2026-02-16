@@ -103,6 +103,46 @@ async function updateExistingCustomer(request, h) {
     return { customer, message: 'Customer updated successfully' };
 }
 
+async function updateOwnProfile(request, h) {
+    // Customers can only update their own profile
+    const customerId = request.auth.id;
+
+    // Only allow updating certain fields
+    const allowedUpdates = {
+        price: request.payload.price,
+        description: request.payload.description,
+        location: request.payload.location,
+    };
+
+    // Handle password update separately if provided
+    if (request.payload.password) {
+        const { hashPassword } = require('../utils/password');
+        allowedUpdates.password = await hashPassword(request.payload.password);
+    }
+
+    const customer = await updateCustomer(customerId, allowedUpdates);
+
+    if (!customer) {
+        return h.response({ error: 'Customer not found' }).code(404);
+    }
+
+    // Return updated customer details (exclude password)
+    const customerDetails = {
+        id: customer._id,
+        username: customer.username,
+        city: customer.city,
+        whatsapp: customer.whatsapp,
+        price: customer.price,
+        description: customer.description,
+        location: customer.location,
+        subscriptionExpiredAt: customer.subscriptionExpiredAt,
+        createdAt: customer.createdAt,
+        updatedAt: customer.updatedAt,
+    };
+
+    return { customer: customerDetails, message: 'Profile updated successfully' };
+}
+
 async function deleteExistingCustomer(request, h) {
     const { id } = request.params;
     const customer = await deleteCustomer(id);
@@ -160,6 +200,13 @@ const subscriptionValidation = Joi.object({
     subscriptionExpiredAt: Joi.date().allow(null).required(),
 });
 
+const customerProfileUpdateValidation = Joi.object({
+    price: Joi.number().min(0).allow(null).optional(),
+    description: Joi.string().allow('', null).optional(),
+    location: Joi.string().allow('', null).optional(),
+    password: Joi.string().min(8).optional(),
+});
+
 module.exports = [
     // Public login endpoint
     {
@@ -186,6 +233,18 @@ module.exports = [
         method: 'POST',
         path: '/api/customers/validate-session',
         handler: preHandler(validateCustomerSession),
+    },
+    // Customer profile update endpoint (requires customer auth)
+    {
+        method: 'PUT',
+        path: '/api/customers/profile',
+        options: {
+            pre: [{ method: customerAuthMiddleware }],
+            validate: {
+                payload: customerProfileUpdateValidation,
+            },
+        },
+        handler: preHandler(updateOwnProfile),
     },
     // Admin CRUD endpoints
     {
