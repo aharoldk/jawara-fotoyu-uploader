@@ -195,14 +195,6 @@ const router = {
                 </div>
 
                 <div class="container">
-                    <!-- Instructions Panel -->
-                    <div class="panel" style="background: #d1fae5; border: 1px solid #10b981; margin-bottom: 24px;">
-                        <h3 style="margin-bottom: 8px; color: #065f46; font-size: 16px; font-weight: 600;">🚀 Automated Upload</h3>
-                        <p style="color: #065f46; font-size: 14px; line-height: 1.6; margin: 0;">
-                            The bot will automatically open Chrome, login to Fotoyu, and upload your files. Just fill in the form and click "Start Upload"!
-                        </p>
-                    </div>
-
                     <div class="panel">
                         <label>Username Fotoyu</label>
                         <input id="username" type="text" placeholder="Enter username" value="${customer.username || ''}" readonly />
