@@ -309,22 +309,6 @@ async function fillLocation(page, lokasi, log) {
     }
 }
 
-/**
- * Fill date field
- */
-async function fillDate(page, tanggal, log) {
-    if (!tanggal) return;
-
-    log('Setting date (tanggal)...');
-    const tanggalInput = page.locator('input[type="date"], input[name*="date"]').first();
-    if (await tanggalInput.count() > 0) {
-        await tanggalInput.clear();
-        await tanggalInput.fill(tanggal);
-        log(`Date set to: ${tanggal}`);
-    } else {
-        log('Date input not found (may not be available on this form)', 'warning');
-    }
-}
 
 
 /**
@@ -391,7 +375,6 @@ async function fillMetadata(page, metadata, log) {
     await fillDescription(page, metadata.deskripsi, log);
     await fillFotoTree(page, metadata.fototree, log);
     await fillLocation(page, metadata.lokasi, log);
-    await fillDate(page, metadata.tanggal, log);
 
     log('Metadata filled successfully');
 }
@@ -515,7 +498,6 @@ async function processAllBatches(page, params, log, isCancelled) {
         batchSize,
         harga,
         lokasi,
-        tanggal,
         deskripsi,
         fototree
     } = params;
@@ -528,7 +510,7 @@ async function processAllBatches(page, params, log, isCancelled) {
     log(`Found ${files.length} ${contentType.toLowerCase()} files to upload`);
 
     // Prepare metadata
-    const metadata = { harga, lokasi, tanggal, deskripsi, fototree };
+    const metadata = { harga, lokasi, deskripsi, fototree };
 
     // Process all batches
     const totalBatches = Math.ceil(files.length / batchSize);

@@ -243,10 +243,6 @@ const router = {
                         </p>
                     </div>
 
-                    <div class="panel">
-                        <label>Tanggal <span style="color: #a0aec0; font-size: 12px;">(optional)</span></label>
-                        <input id="tanggal" type="date" />
-                    </div>
 
                     <div class="panel">
                         <label>Deskripsi <span style="color: #a0aec0; font-size: 12px;">(optional)</span></label>
@@ -487,7 +483,6 @@ const router = {
         const batchSize = parseInt(document.getElementById('batchSize').value) || 500;
         const harga = document.getElementById('harga').value;
         const lokasi = document.getElementById('lokasi').value;
-        const tanggal = document.getElementById('tanggal').value;
         const deskripsi = document.getElementById('deskripsi').value;
         const fototree = document.getElementById('fototree').value;
         const fotoyuPassword = document.getElementById('password-fotoyu').value;
@@ -528,7 +523,6 @@ const router = {
                 batchSize: batchSize,
                 harga: harga,
                 lokasi: lokasi,
-                tanggal: tanggal,
                 deskripsi: deskripsi,
                 fototree: fototree
             });
