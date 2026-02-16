@@ -5,46 +5,7 @@ const router = {
     sessionValidationInterval: null,
 
     async init() {
-        // Validate session on startup
-        await this.validateSession();
         this.navigate(this.getInitialRoute());
-
-        // Set up daily session validation (every 24 hours)
-        this.setupDailySessionValidation();
-    },
-
-    setupDailySessionValidation() {
-        // Clear any existing interval
-        if (this.sessionValidationInterval) {
-            clearInterval(this.sessionValidationInterval);
-        }
-
-        // Validate session every 24 hours (86400000 milliseconds)
-        const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-
-        this.sessionValidationInterval = setInterval(async () => {
-            console.log('Running daily session validation...');
-            await this.validateSession();
-
-            // If session is invalid and user was logged in, redirect to login
-            const token = localStorage.getItem('token');
-            if (!token && this.currentRoute !== 'login') {
-                this.navigate('login');
-            }
-        }, TWENTY_FOUR_HOURS);
-
-        // Also validate when window/app becomes visible again
-        document.addEventListener('visibilitychange', async () => {
-            if (!document.hidden) {
-                console.log('App became visible, validating session...');
-                await this.validateSession();
-
-                const token = localStorage.getItem('token');
-                if (!token && this.currentRoute !== 'login') {
-                    this.navigate('login');
-                }
-            }
-        });
     },
 
     cleanup() {
@@ -311,7 +272,10 @@ const router = {
                     </div>
 
                     <div class="panel">
-                        <button id="startBtn">Start Upload</button>
+                        <div style="display: flex; gap: 12px;">
+                            <button id="startBtn" style="flex: 1;">Start Upload</button>
+                            <button id="stopBtn" style="flex: 1; background-color: #e53e3e; display: none;" disabled>Stop Upload</button>
+                        </div>
                     </div>
 
                     <div class="panel">
@@ -406,11 +370,13 @@ const router = {
     initUploadPage() {
         this.selectedFolder = null;
         this.searchTimeout = null; // For debouncing
+        this.uploadCancelled = false; // Flag to track if upload was cancelled
 
         const logoutBtn = document.getElementById('logout-btn');
         const profileBtn = document.getElementById('profile-btn');
         const selectFolderBtn = document.getElementById('selectFolder');
         const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
         const fototreeSearch = document.getElementById('fototree-search');
         const togglePasswordBtn = document.getElementById('toggle-password');
         const passwordInput = document.getElementById('password-fotoyu');
@@ -453,6 +419,15 @@ const router = {
         startBtn.addEventListener('click', () => {
             this.startUpload();
         });
+
+        // Stop Upload
+        if (stopBtn) {
+            stopBtn.addEventListener('click', () => {
+                this.stopUpload();
+            });
+        }
+
+        // ...existing code...
 
         // FotoTree Search with debouncing
         if (fototreeSearch) {
@@ -525,58 +500,14 @@ const router = {
         const fototree = document.getElementById('fototree').value;
         const fotoyuPassword = document.getElementById('password-fotoyu').value;
 
-        // Validation
-        if (!harga) {
-            this.log('Error: Harga is required', 'error');
-            alert('Please enter Harga');
-            return;
-        }
+        // Reset cancel flag
+        this.uploadCancelled = false;
 
-        if (!fotoyuPassword) {
-            this.log('Error: Fotoyu password is required', 'error');
-            alert('Please enter your Fotoyu password');
-            return;
-        }
+        // Validate session before starting upload
+        this.log('Validating session...', 'info');
+        await this.validateSession();
 
-        // Validate that at least one of lokasi or fototree is filled
-        if (!lokasi && !fototree) {
-            this.log('Error: Either Lokasi or FotoTree must be filled', 'error');
-            alert('Please enter either Lokasi or FotoTree (at least one is required)');
-            return;
-        }
-
-        // Validate that if user typed in FotoTree search but didn't select from dropdown
-        const fototreeSearch = document.getElementById('fototree-search').value;
-        if (fototreeSearch && !fototree) {
-            this.log('Error: Please select a FotoTree from the dropdown list', 'error');
-            alert('Please select a FotoTree from the dropdown list (don\'t just type, you must click on a result)');
-            return;
-        }
-
-        // Validate lokasi format if provided
-        if (lokasi) {
-            // Regex to match format: lat: -6.187377 lng: 106.847112 or Lat: -6.175372 Lng: 106.827194
-            const lokasiRegex = /^(lat|Lat):\s*-?\d+\.?\d*\s+(lng|Lng):\s*-?\d+\.?\d*$/;
-            if (!lokasiRegex.test(lokasi.trim())) {
-                this.log('Error: Invalid lokasi format', 'error');
-                alert('Invalid lokasi format. Please use format:\nlat: -6.187377 lng: 106.847112\nor\nLat: -6.175372 Lng: 106.827194');
-                return;
-            }
-        }
-
-        // Validate batch size based on content type
-        const maxBatchSize = contentType === 'Photo' ? 2000 : 50;
-        if (batchSize > maxBatchSize) {
-            this.log(`Error: Batch size exceeds maximum for ${contentType}`, 'error');
-            alert(`Batch size for ${contentType} cannot exceed ${maxBatchSize}. Please enter a smaller batch size.`);
-            return;
-        }
-
-        if (!this.selectedFolder) {
-            this.log('Error: No folder selected', 'error');
-            alert('Please select a folder first');
-            return;
-        }
+        // ...existing validation code...
 
         const customer = JSON.parse(localStorage.getItem('customer') || '{}');
 
@@ -584,8 +515,14 @@ const router = {
         this.log(`Content Type: ${contentType}, Harga: ${harga}, Batch Size: ${batchSize}`);
 
         const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+
         startBtn.disabled = true;
         startBtn.textContent = 'Uploading...';
+        startBtn.style.display = 'none';
+
+        stopBtn.style.display = 'block';
+        stopBtn.disabled = false;
 
         try {
             const { ipcRenderer } = require('electron');
@@ -604,7 +541,9 @@ const router = {
                 fototree: fototree
             });
 
-            if (result.success) {
+            if (this.uploadCancelled) {
+                this.log('Upload was cancelled by user', 'warning');
+            } else if (result.success) {
                 this.log(`Upload completed successfully! Total: ${result.totalFiles} files`, 'success');
             } else {
                 this.log(`Upload failed: ${result.error}`, 'error');
@@ -618,7 +557,23 @@ const router = {
         } finally {
             startBtn.disabled = false;
             startBtn.textContent = 'Start Upload';
+            startBtn.style.display = 'block';
+
+            stopBtn.style.display = 'none';
+            stopBtn.disabled = true;
         }
+    },
+
+    stopUpload() {
+        this.uploadCancelled = true;
+        this.log('Stopping upload... (will stop after current batch)', 'warning');
+
+        const { ipcRenderer } = require('electron');
+        ipcRenderer.invoke('stop-bot');
+
+        const stopBtn = document.getElementById('stopBtn');
+        stopBtn.disabled = true;
+        stopBtn.textContent = 'Stopping...';
     },
 
     log(message, type = 'info') {

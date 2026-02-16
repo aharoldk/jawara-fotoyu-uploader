@@ -13,6 +13,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 let mainWindow;
+let botCancelled = false;
 
 function createWindow() {
     mainWindow = new BrowserWindow({
@@ -118,6 +119,13 @@ ipcMain.handle('count-files', async (event, folderPath) => {
 
 // IPC handler for running the bot
 ipcMain.handle('run-bot', async (event, params) => {
-    return await runBot(params, mainWindow);
+    botCancelled = false; // Reset cancellation flag
+    return await runBot(params, mainWindow, () => botCancelled);
+});
+
+// IPC handler for stopping the bot
+ipcMain.handle('stop-bot', async (event) => {
+    botCancelled = true;
+    return { success: true, message: 'Bot stop requested' };
 });
 
