@@ -1,14 +1,58 @@
-// Router and App Logic
-const API_URL = 'http://localhost:3000/api';
+const API_URL = process.env.API_URL;
 
-// Router
 const router = {
     currentRoute: '',
+    sessionValidationInterval: null,
 
     async init() {
         // Validate session on startup
         await this.validateSession();
         this.navigate(this.getInitialRoute());
+
+        // Set up daily session validation (every 24 hours)
+        this.setupDailySessionValidation();
+    },
+
+    setupDailySessionValidation() {
+        // Clear any existing interval
+        if (this.sessionValidationInterval) {
+            clearInterval(this.sessionValidationInterval);
+        }
+
+        // Validate session every 24 hours (86400000 milliseconds)
+        const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+        this.sessionValidationInterval = setInterval(async () => {
+            console.log('Running daily session validation...');
+            await this.validateSession();
+
+            // If session is invalid and user was logged in, redirect to login
+            const token = localStorage.getItem('token');
+            if (!token && this.currentRoute !== 'login') {
+                this.navigate('login');
+            }
+        }, TWENTY_FOUR_HOURS);
+
+        // Also validate when window/app becomes visible again
+        document.addEventListener('visibilitychange', async () => {
+            if (!document.hidden) {
+                console.log('App became visible, validating session...');
+                await this.validateSession();
+
+                const token = localStorage.getItem('token');
+                if (!token && this.currentRoute !== 'login') {
+                    this.navigate('login');
+                }
+            }
+        });
+    },
+
+    cleanup() {
+        // Clear the validation interval when app closes
+        if (this.sessionValidationInterval) {
+            clearInterval(this.sessionValidationInterval);
+            this.sessionValidationInterval = null;
+        }
     },
 
     async validateSession() {
@@ -106,13 +150,17 @@ const router = {
 
                         <div class="ant-form-item">
                             <label class="ant-form-item-label">Password</label>
-                            <input 
-                                type="password" 
-                                id="password" 
-                                class="ant-input-password ant-input" 
-                                placeholder="Enter your password"
-                                required
-                            >
+                            <div style="position: relative;">
+                                <input 
+                                    type="password" 
+                                    id="password" 
+                                    class="ant-input-password ant-input" 
+                                    placeholder="Enter your password"
+                                    required
+                                    style="padding-right: 40px;"
+                                >
+                                <button id="toggle-login-password" type="button" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 18px; color: #718096; padding: 4px 8px;">👁️</button>
+                            </div>
                         </div>
 
                         <button type="submit" class="ant-btn ant-btn-primary">
@@ -135,70 +183,139 @@ const router = {
                     <h1>Fotoyu Bot Uploader</h1>
                     <div class="user-info">
                         <span class="user-name">${customer.username || 'User'}</span>
+                        <button class="profile-btn" id="profile-btn">Profile</button>
                         <button class="logout-btn" id="logout-btn">Logout</button>
                     </div>
                 </div>
 
+                <!-- Profile Modal -->
+                <div id="profile-modal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2>Profile Settings</h2>
+                            <button class="modal-close" id="close-profile-modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="profile-form">
+                                <div class="form-group">
+                                    <label>Username</label>
+                                    <input type="text" id="profile-username" value="${customer.username || ''}" readonly />
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Price</label>
+                                    <input type="number" id="profile-price" value="${customer.price || ''}" />
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Location</label>
+                                    <input type="text" id="profile-location" value="${customer.location || ''}" />
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Description</label>
+                                    <input type="text" id="profile-description" value="${customer.description || ''}" />
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>New Password <span style="color: #a0aec0; font-size: 12px;">(leave blank to keep current)</span></label>
+                                    <input type="password" id="profile-new-password" placeholder="Enter new password" />
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Confirm Password</label>
+                                    <input type="password" id="profile-confirm-password" placeholder="Confirm new password" />
+                                </div>
+                                
+                                <button type="submit" class="btn-primary">Save Changes</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="container">
-                    <div class="panel">
-                        <label>👤 Username</label>
-                        <input id="username" type="text" placeholder="Enter username" value="${customer.username || ''}" readonly />
+                    <!-- Instructions Panel -->
+                    <div class="panel" style="background: #d1fae5; border: 1px solid #10b981; margin-bottom: 24px;">
+                        <h3 style="margin-bottom: 8px; color: #065f46; font-size: 16px; font-weight: 600;">🚀 Automated Upload</h3>
+                        <p style="color: #065f46; font-size: 14px; line-height: 1.6; margin: 0;">
+                            The bot will automatically open Chrome, login to Fotoyu, and upload your files. Just fill in the form and click "Start Upload"!
+                        </p>
                     </div>
 
                     <div class="panel">
-                        <label>📂 Select Folder</label>
-                        <button id="selectFolder">📁 Choose Folder</button>
+                        <label>Username Fotoyu</label>
+                        <input id="username" type="text" placeholder="Enter username" value="${customer.username || ''}" readonly />
+                    </div>
+                    
+                    <div class="panel">
+                        <label>Password Fotoyu <span style="color: #e53e3e;">*</span></label>
+                        <div style="position: relative;">
+                            <input id="password-fotoyu" type="password" placeholder="Enter your Fotoyu password" required style="padding-right: 40px;" />
+                            <button id="toggle-password" type="button" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 18px; color: #718096; padding: 4px 8px;">👁️</button>
+                        </div>
+                        <p style="color: #718096; font-size: 12px; margin-top: 8px;">This password is used to login to Fotoyu automatically. It's not stored.</p>
+                    </div>
+
+                    <div class="panel">
+                        <label>Select Folder</label>
+                        <button id="selectFolder">Choose Folder</button>
                         <div id="folderPath"></div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                         <div class="panel">
-                            <label>🎬 Content Type</label>
+                            <label>Content Type</label>
                             <select id="contentType">
-                                <option value="Photo">📸 Photo</option>
-                                <option value="Video">🎥 Video</option>
+                                <option value="Photo">Photo</option>
+                                <option value="Video">Video</option>
                             </select>
                         </div>
 
                         <div class="panel">
-                            <label>📦 Batch Size</label>
+                            <label>Batch Size <span style="color: #a0aec0; font-size: 12px;">(max 2000 for photos, 50 for videos)</span></label>
                             <input id="batchSize" type="number" value="500" min="1" />
                         </div>
                     </div>
 
                     <div class="panel">
-                        <label>💰 Harga <span style="color: #ff6b6b;">*</span></label>
+                        <label>Harga <span style="color: #e53e3e;">*</span></label>
                         <input id="harga" type="number" placeholder="Enter harga" value="${customer.price || ''}" required />
                     </div>
 
                     <div class="panel">
-                        <label>📍 Lokasi <span style="color: #adb5bd; font-size: 12px;">(optional)</span></label>
-                        <input id="lokasi" type="text" placeholder="Enter lokasi" value="${customer.location || ''}" />
+                        <label>Lokasi <span style="color: #e53e3e; font-size: 12px;">(required: at least one of Lokasi or FotoTree)</span></label>
+                        <input id="lokasi" type="text" placeholder="lat: -6.187377 lng: 106.847112" />
+                        <p style="color: #718096; font-size: 12px; margin-top: 8px;">
+                            Format: <code style="background: #f7fafc; padding: 2px 6px; border-radius: 3px;">lat: -6.187377 lng: 106.847112</code> or <code style="background: #f7fafc; padding: 2px 6px; border-radius: 3px;">Lat: -6.175372 Lng: 106.827194</code>
+                        </p>
                     </div>
 
                     <div class="panel">
-                        <label>📅 Tanggal <span style="color: #adb5bd; font-size: 12px;">(optional)</span></label>
+                        <label>Tanggal <span style="color: #a0aec0; font-size: 12px;">(optional)</span></label>
                         <input id="tanggal" type="date" />
                     </div>
 
                     <div class="panel">
-                        <label>📝 Deskripsi <span style="color: #adb5bd; font-size: 12px;">(optional)</span></label>
+                        <label>Deskripsi <span style="color: #a0aec0; font-size: 12px;">(optional)</span></label>
                         <input id="deskripsi" type="text" placeholder="Enter deskripsi" value="${customer.description || ''}" />
                     </div>
 
                     <div class="panel">
-                        <label>🌳 FotoTree <span style="color: #adb5bd; font-size: 12px;">(optional)</span></label>
-                        <input id="fototree-search" type="text" placeholder="Search for FotoTree..." />
+                        <label>FotoTree <span style="color: #e53e3e; font-size: 12px;">(required: at least one of Lokasi or FotoTree)</span></label>
+                        <input id="fototree-search" type="text" placeholder="Type to search FotoTree..." />
                         <div id="fototree-results"></div>
                         <input id="fototree" type="hidden" />
+                        <p style="color: #718096; font-size: 12px; margin-top: 8px;">
+                            ℹ️ Type at least 3 characters to search, then <strong>click on a result</strong> to select it.
+                        </p>
                     </div>
 
                     <div class="panel">
-                        <button id="startBtn">▶ Start Upload</button>
+                        <button id="startBtn">Start Upload</button>
                     </div>
 
                     <div class="panel">
-                        <h3 style="margin-bottom: 16px; color: #495057; font-size: 16px; font-weight: 700;">📊 Logs</h3>
+                        <h3 style="margin-bottom: 12px; color: #2d3748; font-size: 16px; font-weight: 600;">Logs</h3>
                         <div id="logs"></div>
                     </div>
                 </div>
@@ -213,6 +330,20 @@ const router = {
         const passwordInput = document.getElementById('password');
         const errorMessage = document.getElementById('error-message');
         const loginContainer = document.querySelector('.login-container');
+        const toggleLoginPasswordBtn = document.getElementById('toggle-login-password');
+
+        // Password visibility toggle for login
+        if (toggleLoginPasswordBtn && passwordInput) {
+            toggleLoginPasswordBtn.addEventListener('click', () => {
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    toggleLoginPasswordBtn.textContent = '🙈';
+                } else {
+                    passwordInput.type = 'password';
+                    toggleLoginPasswordBtn.textContent = '👁️';
+                }
+            });
+        }
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -277,9 +408,12 @@ const router = {
         this.searchTimeout = null; // For debouncing
 
         const logoutBtn = document.getElementById('logout-btn');
+        const profileBtn = document.getElementById('profile-btn');
         const selectFolderBtn = document.getElementById('selectFolder');
         const startBtn = document.getElementById('startBtn');
         const fototreeSearch = document.getElementById('fototree-search');
+        const togglePasswordBtn = document.getElementById('toggle-password');
+        const passwordInput = document.getElementById('password-fotoyu');
 
         // Listen for bot logs from main process
         const { ipcRenderer } = require('electron');
@@ -287,10 +421,28 @@ const router = {
             this.log(message, type);
         });
 
+        // Profile Modal
+        profileBtn.addEventListener('click', () => {
+            this.openProfileModal();
+        });
+
         // Logout
         logoutBtn.addEventListener('click', () => {
             this.logout();
         });
+
+        // Password visibility toggle
+        if (togglePasswordBtn && passwordInput) {
+            togglePasswordBtn.addEventListener('click', () => {
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    togglePasswordBtn.textContent = '🙈';
+                } else {
+                    passwordInput.type = 'password';
+                    togglePasswordBtn.textContent = '👁️';
+                }
+            });
+        }
 
         // Select Folder (Note: Browser-based file selection is limited, we'll use file input)
         selectFolderBtn.addEventListener('click', () => {
@@ -305,6 +457,15 @@ const router = {
         // FotoTree Search with debouncing
         if (fototreeSearch) {
             fototreeSearch.addEventListener('input', () => {
+                // Clear the hidden input when user types again
+                const fototreeInput = document.getElementById('fototree');
+                if (fototreeInput.value) {
+                    fototreeInput.value = '';
+                    // Reset visual feedback
+                    fototreeSearch.style.borderColor = '';
+                    fototreeSearch.style.backgroundColor = '';
+                }
+
                 clearTimeout(this.searchTimeout);
                 this.searchTimeout = setTimeout(async () => {
                     const searchTerm = fototreeSearch.value;
@@ -332,9 +493,21 @@ const router = {
 
                 const folderPath = document.getElementById('folderPath');
                 const folderName = result.folderPath.split('/').pop() || result.folderPath.split('\\').pop();
-                folderPath.textContent = `Selected: ${folderName}`;
+
+                // Count files in the folder
+                const fileCount = await ipcRenderer.invoke('count-files', result.folderPath);
+
+                folderPath.innerHTML = `
+                    <div style="margin-top: 8px;">
+                        <div style="color: #2d3748; font-weight: 500;">Selected: ${folderName}</div>
+                        <div style="color: #718096; font-size: 14px; margin-top: 4px;">
+                            📸 Photos: ${fileCount.photos} | 🎥 Videos: ${fileCount.videos} | 📁 Total: ${fileCount.total}
+                        </div>
+                    </div>
+                `;
 
                 this.log(`Folder selected: ${result.folderPath}`);
+                this.log(`Files found - Photos: ${fileCount.photos}, Videos: ${fileCount.videos}, Total: ${fileCount.total}`, 'info');
             }
         } catch (error) {
             console.error('Error selecting folder:', error);
@@ -350,11 +523,52 @@ const router = {
         const tanggal = document.getElementById('tanggal').value;
         const deskripsi = document.getElementById('deskripsi').value;
         const fototree = document.getElementById('fototree').value;
+        const fotoyuPassword = document.getElementById('password-fotoyu').value;
 
         // Validation
         if (!harga) {
             this.log('Error: Harga is required', 'error');
             alert('Please enter Harga');
+            return;
+        }
+
+        if (!fotoyuPassword) {
+            this.log('Error: Fotoyu password is required', 'error');
+            alert('Please enter your Fotoyu password');
+            return;
+        }
+
+        // Validate that at least one of lokasi or fototree is filled
+        if (!lokasi && !fototree) {
+            this.log('Error: Either Lokasi or FotoTree must be filled', 'error');
+            alert('Please enter either Lokasi or FotoTree (at least one is required)');
+            return;
+        }
+
+        // Validate that if user typed in FotoTree search but didn't select from dropdown
+        const fototreeSearch = document.getElementById('fototree-search').value;
+        if (fototreeSearch && !fototree) {
+            this.log('Error: Please select a FotoTree from the dropdown list', 'error');
+            alert('Please select a FotoTree from the dropdown list (don\'t just type, you must click on a result)');
+            return;
+        }
+
+        // Validate lokasi format if provided
+        if (lokasi) {
+            // Regex to match format: lat: -6.187377 lng: 106.847112 or Lat: -6.175372 Lng: 106.827194
+            const lokasiRegex = /^(lat|Lat):\s*-?\d+\.?\d*\s+(lng|Lng):\s*-?\d+\.?\d*$/;
+            if (!lokasiRegex.test(lokasi.trim())) {
+                this.log('Error: Invalid lokasi format', 'error');
+                alert('Invalid lokasi format. Please use format:\nlat: -6.187377 lng: 106.847112\nor\nLat: -6.175372 Lng: 106.827194');
+                return;
+            }
+        }
+
+        // Validate batch size based on content type
+        const maxBatchSize = contentType === 'Photo' ? 2000 : 50;
+        if (batchSize > maxBatchSize) {
+            this.log(`Error: Batch size exceeds maximum for ${contentType}`, 'error');
+            alert(`Batch size for ${contentType} cannot exceed ${maxBatchSize}. Please enter a smaller batch size.`);
             return;
         }
 
@@ -371,7 +585,7 @@ const router = {
 
         const startBtn = document.getElementById('startBtn');
         startBtn.disabled = true;
-        startBtn.textContent = '⏸ Uploading...';
+        startBtn.textContent = 'Uploading...';
 
         try {
             const { ipcRenderer } = require('electron');
@@ -379,6 +593,7 @@ const router = {
             // Run the bot automation
             const result = await ipcRenderer.invoke('run-bot', {
                 username: customer.username,
+                password: fotoyuPassword,
                 contentType: contentType,
                 folderPath: this.selectedFolder,
                 batchSize: batchSize,
@@ -391,14 +606,6 @@ const router = {
 
             if (result.success) {
                 this.log(`Upload completed successfully! Total: ${result.totalFiles} files`, 'success');
-
-                // Reset form
-                this.selectedFolder = null;
-                document.getElementById('folderPath').textContent = '';
-                document.getElementById('harga').value = '';
-                document.getElementById('lokasi').value = '';
-                document.getElementById('tanggal').value = '';
-                document.getElementById('deskripsi').value = '';
             } else {
                 this.log(`Upload failed: ${result.error}`, 'error');
                 alert(`Upload failed: ${result.error}`);
@@ -410,7 +617,7 @@ const router = {
             alert(`Upload failed: ${error.message}`);
         } finally {
             startBtn.disabled = false;
-            startBtn.textContent = '▶ Start Upload';
+            startBtn.textContent = 'Start Upload';
         }
     },
 
@@ -467,9 +674,16 @@ const router = {
                     resultItem.addEventListener('click', () => {
                         const fototreeSearch = document.getElementById('fototree-search');
                         fototreeSearch.value = item.name;
-                        fototreeInput.value = item.id; // Store the ID for the bot
+                        fototreeInput.value = item.name; // Store the name for the bot
                         resultsDiv.innerHTML = '';
                         resultsDiv.style.display = 'none';
+
+                        // Add visual feedback that FotoTree was selected
+                        fototreeSearch.style.borderColor = '#10b981';
+                        fototreeSearch.style.backgroundColor = '#d1fae5';
+
+                        // Log for user feedback
+                        router.log(`FotoTree selected: ${item.name}`, 'success');
 
                         // Log for debugging
                         console.log('Selected FotoTree:', { name: item.name, id: item.id });
@@ -483,6 +697,105 @@ const router = {
         } catch (error) {
             console.error('Error fetching FotoTree:', error);
             resultsDiv.innerHTML = '<div class="fototree-item" style="color: #ff6b6b;">Error fetching results. Please try again.</div>';
+        }
+    },
+
+    // Profile Modal functions
+    openProfileModal() {
+        const modal = document.getElementById('profile-modal');
+        const closeBtn = document.getElementById('close-profile-modal');
+        const form = document.getElementById('profile-form');
+
+        modal.style.display = 'flex';
+
+        // Close modal handler - use once to prevent duplicates
+        const closeModal = () => {
+            modal.style.display = 'none';
+        };
+
+        closeBtn.onclick = closeModal;
+
+        // Close on outside click
+        const outsideClickHandler = (e) => {
+            if (e.target === modal) {
+                closeModal();
+                window.removeEventListener('click', outsideClickHandler);
+            }
+        };
+        window.addEventListener('click', outsideClickHandler);
+
+        // Handle profile update - remove existing listener first
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            await this.updateProfile();
+        };
+    },
+
+    async updateProfile() {
+        const price = document.getElementById('profile-price').value;
+        const location = document.getElementById('profile-location').value;
+        const description = document.getElementById('profile-description').value;
+        const newPassword = document.getElementById('profile-new-password').value;
+        const confirmPassword = document.getElementById('profile-confirm-password').value;
+
+        // Validate passwords match if provided
+        if (newPassword || confirmPassword) {
+            if (newPassword !== confirmPassword) {
+                alert('Passwords do not match!');
+                return;
+            }
+            if (newPassword.length < 8) {
+                alert('Password must be at least 8 characters long!');
+                return;
+            }
+        }
+
+        const token = localStorage.getItem('token');
+        const customer = JSON.parse(localStorage.getItem('customer') || '{}');
+
+        try {
+            const updateData = {
+                price: price ? parseFloat(price) : undefined,
+                location: location || undefined,
+                description: description || undefined,
+            };
+
+            // Only include password if provided
+            if (newPassword) {
+                updateData.password = newPassword;
+            }
+
+            const response = await fetch(`${API_URL}/customers/profile`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updateData),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || data.error || 'Update failed');
+            }
+
+            // Update local storage with new customer data
+            const updatedCustomer = {
+                ...customer,
+                ...data.customer
+            };
+            localStorage.setItem('customer', JSON.stringify(updatedCustomer));
+
+            alert('Profile updated successfully!');
+
+            // Close modal and refresh page
+            document.getElementById('profile-modal').style.display = 'none';
+            this.navigate('upload');
+
+        } catch (error) {
+            console.error('Profile update error:', error);
+            alert(`Failed to update profile: ${error.message}`);
         }
     },
 
@@ -512,5 +825,10 @@ const router = {
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     router.init();
+});
+
+// Cleanup when window is closed
+window.addEventListener('beforeunload', () => {
+    router.cleanup();
 });
 
