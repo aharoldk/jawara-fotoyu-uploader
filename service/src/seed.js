@@ -56,7 +56,19 @@ async function seed() {
       subscriptionExpiredAt: new Date(Date.now() + 30*24*60*60*1000), // 30 days from now
       createdAt: new Date(),
       updatedAt: new Date()
-    }
+    },
+    {
+      username: 'abongfriendz',
+      password: await hashPassword('password123'),
+      city: 'Jakarta',
+      whatsapp: '08123456789',
+      price: 35000,
+      description: 'Professional photographer specializing in wedding and portrait photography',
+      location: 'Jakarta Selatan, DKI Jakarta',
+      subscriptionExpiredAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
   ]);
 
   // Seed history_subscription
