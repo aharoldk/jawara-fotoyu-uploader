@@ -11,7 +11,7 @@ const {
     deleteCustomer,
     updateSubscription,
 } = require('../repositories/customerRepository');
-
+const { hashPassword } = require('../utils/password');
 
 async function loginCustomer(request, h) {
     const payload = request.payload;
@@ -111,12 +111,10 @@ async function updateOwnProfile(request, h) {
     const allowedUpdates = {
         price: request.payload.price,
         description: request.payload.description,
-        location: request.payload.location,
     };
 
     // Handle password update separately if provided
     if (request.payload.password) {
-        const { hashPassword } = require('../utils/password');
         allowedUpdates.password = await hashPassword(request.payload.password);
     }
 
@@ -134,7 +132,6 @@ async function updateOwnProfile(request, h) {
         whatsapp: customer.whatsapp,
         price: customer.price,
         description: customer.description,
-        location: customer.location,
         subscriptionExpiredAt: customer.subscriptionExpiredAt,
         createdAt: customer.createdAt,
         updatedAt: customer.updatedAt,
@@ -182,7 +179,6 @@ const customerValidation = Joi.object({
     whatsapp: Joi.string().allow('', null).optional(),
     price: Joi.number().min(0).allow(null).optional(),
     description: Joi.string().allow('', null).optional(),
-    location: Joi.string().allow('', null).optional(),
     subscriptionExpiredAt: Joi.date().allow(null).optional(),
 });
 
@@ -192,7 +188,6 @@ const updateCustomerValidation = Joi.object({
     whatsapp: Joi.string().allow('', null).optional(),
     price: Joi.number().min(0).allow(null).optional(),
     description: Joi.string().allow('', null).optional(),
-    location: Joi.string().allow('', null).optional(),
     subscriptionExpiredAt: Joi.date().allow(null).optional(),
 });
 
@@ -203,7 +198,6 @@ const subscriptionValidation = Joi.object({
 const customerProfileUpdateValidation = Joi.object({
     price: Joi.number().min(0).allow(null).optional(),
     description: Joi.string().allow('', null).optional(),
-    location: Joi.string().allow('', null).optional(),
     password: Joi.string().min(8).optional(),
 });
 

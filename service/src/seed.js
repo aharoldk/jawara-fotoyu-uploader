@@ -40,7 +40,6 @@ async function seed() {
       whatsapp: '08123456789',
       price: 150000,
       description: 'Professional photographer specializing in wedding and portrait photography',
-      location: 'Jakarta Selatan, DKI Jakarta',
       subscriptionExpiredAt: null,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -52,7 +51,6 @@ async function seed() {
       whatsapp: '08234567890',
       price: 200000,
       description: 'Event photographer with 5 years experience in corporate events',
-      location: 'Bandung Utara, Jawa Barat',
       subscriptionExpiredAt: new Date(Date.now() + 30*24*60*60*1000), // 30 days from now
       createdAt: new Date(),
       updatedAt: new Date()
@@ -64,7 +62,6 @@ async function seed() {
       whatsapp: '08123456789',
       price: 35000,
       description: 'Professional photographer specializing in wedding and portrait photography',
-      location: 'Jakarta Selatan, DKI Jakarta',
       subscriptionExpiredAt: null,
       createdAt: new Date(),
       updatedAt: new Date()

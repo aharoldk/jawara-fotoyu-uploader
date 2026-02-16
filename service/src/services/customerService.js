@@ -27,7 +27,6 @@ async function loginCustomer(username, password, deviceInfo = null, ipAddress = 
         whatsapp: customer.whatsapp,
         price: customer.price,
         description: customer.description,
-        location: customer.location,
         subscriptionExpiredAt: customer.subscriptionExpiredAt,
         createdAt: customer.createdAt,
         updatedAt: customer.updatedAt,

@@ -26,10 +26,6 @@ const customerSchema = new mongoose.Schema({
         type: String,
         required: false,
     },
-    location: {
-        type: String,
-        required: false,
-    },
     subscriptionExpiredAt: {
         type: Date,
         required: false,
