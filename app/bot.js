@@ -186,14 +186,7 @@ async function uploadFilesBatch(page, batch, contentType, log) {
     log(`Selecting ${batch.length} files...`);
     await fileChooser.setFiles(batch);
 
-    log(`Files selected, waiting for upload to process...`);
-
-    // Wait for files to be uploaded - increase time for larger batches
-    const waitTime = Math.max(5000, batch.length * 100); // At least 5 seconds, +100ms per file
-    log(`Waiting ${waitTime}ms for files to upload...`);
-    await page.waitForTimeout(waitTime);
-
-    log('Files upload processing completed');
+    log(`Files selected, waiting for compression to complete...`);
 }
 
 // ============================================================================
@@ -326,12 +319,9 @@ async function closeWarningModal(page, log) {
  * Fill all metadata fields
  */
 async function fillMetadata(page, metadata, log) {
-    log('All files selected! Now filling metadata...');
     log('Waiting for metadata form to be ready...');
 
-    // Wait for the form to appear - try to detect any of the metadata inputs
     try {
-        log('Waiting for metadata inputs to appear and become visible (no timeout)...');
         await page.waitForSelector(
             'input[name="price"], textarea[placeholder*="Ceritakan tentang konten kamu"], input[placeholder*="FotoTree"]',
             { state: 'visible', timeout: 0 }

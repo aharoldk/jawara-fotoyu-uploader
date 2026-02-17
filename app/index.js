@@ -562,6 +562,8 @@ const router = {
 
             if (this.uploadCancelled) {
                 this.log('Upload was cancelled by user', 'warning');
+            } else if (result.cancelled) {
+                this.log('Upload was stopped by user', 'warning');
             } else if (result.success) {
                 this.log(`Upload completed successfully! Total: ${result.totalFiles} files`, 'success');
             } else {
@@ -585,7 +587,7 @@ const router = {
 
     stopUpload() {
         this.uploadCancelled = true;
-        this.log('Stopping upload... (will stop after current batch)', 'warning');
+        this.log('Stopping upload... (will stop at the next checkpoint)', 'warning');
 
         const { ipcRenderer } = require('electron');
         ipcRenderer.invoke('stop-bot');
