@@ -6,17 +6,19 @@
   "scripts": {
     "start": "electron .",
     "dev": "nodemon --watch index.html --watch index.js --watch main.js --watch bot.js --exec electron .",
-    "build": "electron-builder",
-    "build:mac": "electron-builder --mac",
-    "build:win": "electron-builder --win",
+    "build": "cross-env NODE_ENV=production electron-builder",
+    "build:mac": "cross-env NODE_ENV=production electron-builder --mac",
+    "build:win": "cross-env NODE_ENV=production electron-builder --win",
     "release": "standard-version"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "cross-env": "^10.1.0",
     "electron": "^28.1.0",
     "electron-builder": "^24.9.1",
+    "electron-reload": "^2.0.0-alpha.1",
     "nodemon": "^3.0.2",
     "standard-version": "^9.5.0"
   },
@@ -24,7 +26,6 @@
     "antd": "^5.22.6",
     "axios": "^1.7.9",
     "dotenv": "^16.3.1",
-    "electron-reload": "^2.0.0-alpha.1",
     "playwright": "^1.57.0"
   },
   "build": {
@@ -48,8 +49,7 @@
     },
     "files": [
       "**/*",
-      "!node_modules/**/*",
-      "node_modules/dotenv/**/*"
+      "!dist/**/*"
     ]
   }
 }
