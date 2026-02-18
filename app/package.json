@@ -1,6 +1,6 @@
 {
   "name": "fotoyu-bot-uploader",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Desktop automation app for Fotoyu",
   "main": "main.js",
   "scripts": {
@@ -8,7 +8,8 @@
     "dev": "nodemon --watch index.html --watch index.js --watch main.js --watch bot.js --exec electron .",
     "build": "electron-builder",
     "build:mac": "electron-builder --mac",
-    "build:win": "electron-builder --win"
+    "build:win": "electron-builder --win",
+    "release": "standard-version"
   },
   "keywords": [],
   "author": "",
@@ -16,7 +17,8 @@
   "devDependencies": {
     "electron": "^28.1.0",
     "electron-builder": "^24.9.1",
-    "nodemon": "^3.0.2"
+    "nodemon": "^3.0.2",
+    "standard-version": "^9.5.0"
   },
   "dependencies": {
     "antd": "^5.22.6",
