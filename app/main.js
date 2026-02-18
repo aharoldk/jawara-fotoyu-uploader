@@ -2,10 +2,13 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { runBot } = require('./bot');
-require('dotenv').config();
 
-// Enable hot-reload in development
-if (process.env.NODE_ENV === 'development') {
+// Determine if we're in production based on whether the app is packaged
+const isProduction = app.isPackaged;
+const envFile = isProduction ? '.env.production' : '.env';
+require('dotenv').config({ path: path.join(__dirname, envFile) });
+
+if (!app.isPackaged) {
     require('electron-reload')(__dirname, {
         electron: path.join(__dirname, 'node_modules', '.bin', 'electron'),
         hardResetMethod: 'exit'
@@ -29,7 +32,7 @@ function createWindow() {
     mainWindow.loadFile('index.html');
 
     // Open DevTools in development
-    if (process.env.NODE_ENV === 'development') {
+    if (!isProduction) {
         mainWindow.webContents.openDevTools();
     }
 
