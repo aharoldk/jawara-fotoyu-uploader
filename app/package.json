@@ -1,6 +1,6 @@
 {
   "name": "fotoyu-bot-uploader",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Desktop automation app for Fotoyu",
   "main": "main.js",
   "scripts": {
