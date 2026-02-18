@@ -7,13 +7,14 @@ const customerRoutes = require('./routes/customerRoute');
 
 const init = async () => {
     const server = Hapi.server({
-        port: process.env.PORT,
-        host: 'localhost',
+        port: process.env.PORT || 3000,
+        host: process.env.HOST || '0.0.0.0',
         routes: {
             cors: {
-                origin: ['*'],
-                headers: ['Accept', 'Authorization', 'Content-Type'],
-                additionalHeaders: ['X-Requested-With'],
+                origin: process.env.CORS_ORIGIN
+                    ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
+                    : ['http://localhost:5173', 'http://localhost:3000'],
+                credentials: true,
             },
         },
     });

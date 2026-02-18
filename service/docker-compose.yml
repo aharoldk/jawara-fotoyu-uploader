@@ -1,11 +1,22 @@
+version: '3.8'
+
 services:
   mongodb:
     image: mongo:6.0
     container_name: fotoyu-mongodb
+    restart: unless-stopped
     ports:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=fotoyu
+    networks:
+      - fotoyu-network
 
 volumes:
   mongodb_data:
+
+networks:
+  fotoyu-network:
+    driver: bridge
