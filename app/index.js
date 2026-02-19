@@ -174,6 +174,14 @@ const router = {
                                 </div>
                                 
                                 <div class="form-group">
+                                    <label>Concurrent Tabs <span style="color: #a0aec0; font-size: 12px;">(1-10, higher = faster uploads)</span></label>
+                                    <input type="number" id="profile-concurrent-tabs" value="${customer.concurrentTabs || 1}" min="1" max="10" />
+                                    <p style="color: #718096; font-size: 12px; margin-top: 4px;">
+                                        ℹ️ Number of browser tabs to use for concurrent uploads. Recommended: 2-4 for most users.
+                                    </p>
+                                </div>
+                                
+                                <div class="form-group">
                                     <label>New Password <span style="color: #a0aec0; font-size: 12px;">(leave blank to keep current)</span></label>
                                     <input type="password" id="profile-new-password" placeholder="Enter new password" />
                                 </div>
@@ -532,8 +540,11 @@ const router = {
 
         const customer = JSON.parse(localStorage.getItem('customer') || '{}');
 
+        // Get concurrentTabs from customer settings (default to 1 if not set)
+        const concurrentTabs = customer.concurrentTabs || 1;
+
         this.log(`Starting upload bot...`);
-        this.log(`Content Type: ${contentType}, Harga: ${harga}, Batch Size: ${batchSize}`);
+        this.log(`Content Type: ${contentType}, Harga: ${harga}, Batch Size: ${batchSize}, Concurrent Tabs: ${concurrentTabs}`);
 
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
@@ -557,7 +568,8 @@ const router = {
                 batchSize: batchSize,
                 harga: harga,
                 deskripsi: deskripsi,
-                fototree: fototree
+                fototree: fototree,
+                concurrentTabs: concurrentTabs
             });
 
             if (this.uploadCancelled) {
@@ -709,10 +721,16 @@ const router = {
 
     async updateProfile() {
         const price = document.getElementById('profile-price').value;
-        const location = document.getElementById('profile-location').value;
         const description = document.getElementById('profile-description').value;
+        const concurrentTabs = parseInt(document.getElementById('profile-concurrent-tabs').value) || 1;
         const newPassword = document.getElementById('profile-new-password').value;
         const confirmPassword = document.getElementById('profile-confirm-password').value;
+
+        // Validate concurrentTabs
+        if (concurrentTabs < 1 || concurrentTabs > 10) {
+            alert('Concurrent Tabs must be between 1 and 10!');
+            return;
+        }
 
         // Validate passwords match if provided
         if (newPassword || confirmPassword) {
@@ -732,8 +750,8 @@ const router = {
         try {
             const updateData = {
                 price: price ? parseFloat(price) : undefined,
-                location: location || undefined,
                 description: description || undefined,
+                concurrentTabs: concurrentTabs,
             };
 
             // Only include password if provided
@@ -764,6 +782,7 @@ const router = {
             localStorage.setItem('customer', JSON.stringify(updatedCustomer));
 
             alert('Profile updated successfully!');
+            this.log(`Profile updated: Concurrent Tabs set to ${concurrentTabs}`, 'success');
 
             // Close modal and refresh page
             document.getElementById('profile-modal').style.display = 'none';

@@ -446,68 +446,159 @@ async function publishUpload(page, log) {
 }
 
 /**
- * Process a single batch of files
+ * Process batches in a single tab from a shared queue
  */
-async function processUpload(page, batch, batchNumber, totalBatches, contentType, metadata, log) {
-    log(`Processing batch ${batchNumber}/${totalBatches} (${batch.length} files)...`);
+async function processTabBatches(page, tabId, batchQueue, params, metadata, log, isCancelled, stats) {
+    const { username, contentType } = params;
 
-    await uploadFilesBatch(page, batch, contentType, log);
-    await fillMetadata(page, metadata, log);
-    await publishUpload(page, log);
+    log(`[Tab ${tabId}] Initialized and ready to process batches`);
 
-    log(`Batch ${batchNumber}/${totalBatches} processed successfully`);
+    while (batchQueue.length > 0) {
+        // Check if upload was cancelled
+        if (isCancelled && isCancelled()) {
+            log(`[Tab ${tabId}] Upload cancelled, stopping...`, 'warning');
+            break;
+        }
+
+        // Get next batch from queue
+        const batchInfo = batchQueue.shift();
+        if (!batchInfo) break;
+
+        const { batch, batchNumber, totalBatches } = batchInfo;
+
+        try {
+            log(`[Tab ${tabId}] Processing batch ${batchNumber}/${totalBatches} (${batch.length} files)...`);
+
+            // Navigate to upload page for this batch
+            await navigateToUploadPage(page, username, log);
+
+            // Upload and process this batch
+            await uploadFilesBatch(page, batch, contentType, log);
+            await fillMetadata(page, metadata, log);
+            await publishUpload(page, log);
+
+            // Update statistics
+            stats.filesUploaded += batch.length;
+            stats.batchesCompleted++;
+
+            log(`[Tab ${tabId}] Batch ${batchNumber}/${totalBatches} completed successfully`);
+
+            // Small delay between batches
+            await page.waitForTimeout(2000);
+
+        } catch (error) {
+            log(`[Tab ${tabId}] Error processing batch ${batchNumber}: ${error.message}`, 'error');
+            // Continue with next batch despite error
+        }
+    }
+
+    log(`[Tab ${tabId}] Finished processing all assigned batches`);
 }
 
 /**
- * Process all batches
+ * Create and initialize multiple tabs for concurrent uploads
  */
-async function processAllBatches(page, params, log, isCancelled) {
+async function createConcurrentTabs(context, numTabs, params, log) {
+    log(`Creating ${numTabs} concurrent tabs...`);
+
+    const { username } = params;
+    const tabs = [];
+
+    for (let i = 0; i < numTabs; i++) {
+        const page = await context.newPage();
+        await page.bringToFront();
+
+        log(`Tab ${i + 1}/${numTabs} created`);
+
+        // Only perform full login for the first tab
+        // Other tabs will share the same session/cookies
+        if (i === 0) {
+            log(`[Tab ${i + 1}] Performing login...`);
+            await performLogin(page, params, log);
+        } else {
+            // For subsequent tabs, just navigate to profile page (already logged in via shared context)
+            log(`[Tab ${i + 1}] Navigating to profile page (using shared session)...`);
+            await page.goto(`https://www.fotoyu.com/profile/${username}?type=all`, {waitUntil: 'networkidle'});
+            log(`[Tab ${i + 1}] Ready (session active)`);
+        }
+
+        tabs.push({
+            id: i + 1,
+            page: page
+        });
+
+        // Small delay between tab creations
+        await page.waitForTimeout(1000);
+    }
+
+    log(`All ${numTabs} tabs created and ready!`);
+    return tabs;
+}
+
+/**
+ * Distribute batches across multiple tabs and process concurrently
+ */
+async function runMultiTabUpload(context, params, log, isCancelled) {
     const {
-        username,
         folderPath,
         contentType,
         batchSize,
         harga,
         deskripsi,
-        fototree
+        fototree,
+        concurrentTabs = 1
     } = params;
-
-    // Navigate to upload page
-    await navigateToUploadPage(page, username, log);
 
     // Get files
     const files = getFilesFromFolder(folderPath, contentType);
     log(`Found ${files.length} ${contentType.toLowerCase()} files to upload`);
 
+    if (files.length === 0) {
+        log('No files found to upload', 'warning');
+        return 0;
+    }
+
     // Prepare metadata
     const metadata = { harga, deskripsi, fototree };
 
-    // Process all batches
+    // Create batch queue
+    const batchQueue = [];
     const totalBatches = Math.ceil(files.length / batchSize);
-    let filesUploaded = 0;
 
     for (let i = 0; i < files.length; i += batchSize) {
-        // Check if upload was cancelled
-        if (isCancelled && isCancelled()) {
-            log('Upload cancelled by user. Stopping...', 'warning');
-            return filesUploaded;
-        }
-
         const batch = files.slice(i, i + batchSize);
         const batchNumber = Math.floor(i / batchSize) + 1;
 
-        await processUpload(page, batch, batchNumber, totalBatches, contentType, metadata, log);
-        filesUploaded += batch.length;
-
-        // Small delay between batches
-        if (i + batchSize < files.length) {
-            log('Waiting before next batch...');
-            await page.waitForTimeout(2000);
-        }
+        batchQueue.push({
+            batch,
+            batchNumber,
+            totalBatches
+        });
     }
 
-    log(`All batches completed! Total: ${filesUploaded} files uploaded`, 'success');
-    return filesUploaded;
+    log(`Created ${totalBatches} batches to be processed by ${concurrentTabs} tab(s)`);
+
+    // Create tabs
+    const tabs = await createConcurrentTabs(context, concurrentTabs, params, log);
+
+    // Shared statistics
+    const stats = {
+        filesUploaded: 0,
+        batchesCompleted: 0
+    };
+
+    // Process batches concurrently across all tabs
+    log('Starting concurrent batch processing...');
+
+    const tabPromises = tabs.map(tab =>
+        processTabBatches(tab.page, tab.id, batchQueue, params, metadata, log, isCancelled, stats)
+    );
+
+    // Wait for all tabs to complete
+    await Promise.all(tabPromises);
+
+    log(`All tabs completed! Total: ${stats.filesUploaded} files uploaded in ${stats.batchesCompleted} batches`, 'success');
+    return stats.filesUploaded;
 }
 
 // ============================================================================
@@ -518,12 +609,14 @@ async function runBot(params, mainWindow, isCancelled) {
 
     try {
         // Launch browser
-        const { page } = await launchBrowser(log);
+        const { context } = await launchBrowser(log);
 
-        // Login
-        await performLogin(page, params, log);
+        // Determine number of concurrent tabs (default to 1 for backward compatibility)
+        const concurrentTabs = params.concurrentTabs || 1;
+        log(`Using ${concurrentTabs} concurrent tab(s) for uploading`);
 
-        const totalFiles = await processAllBatches(page, params, log, isCancelled);
+        // Run multi-tab upload
+        const totalFiles = await runMultiTabUpload(context, params, log, isCancelled);
 
         return { success: true, totalFiles };
 
