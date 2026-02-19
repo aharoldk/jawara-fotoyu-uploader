@@ -111,6 +111,7 @@ async function updateOwnProfile(request, h) {
     const allowedUpdates = {
         price: request.payload.price,
         description: request.payload.description,
+        concurrentTabs: request.payload.concurrentTabs,
     };
 
     // Handle password update separately if provided
@@ -132,6 +133,7 @@ async function updateOwnProfile(request, h) {
         whatsapp: customer.whatsapp,
         price: customer.price,
         description: customer.description,
+        concurrentTabs: customer.concurrentTabs,
         subscriptionExpiredAt: customer.subscriptionExpiredAt,
         createdAt: customer.createdAt,
         updatedAt: customer.updatedAt,
@@ -188,6 +190,7 @@ const updateCustomerValidation = Joi.object({
     whatsapp: Joi.string().allow('', null).optional(),
     price: Joi.number().min(0).allow(null).optional(),
     description: Joi.string().allow('', null).optional(),
+    concurrentTabs: Joi.number().integer().min(1).max(10).optional(),
     subscriptionExpiredAt: Joi.date().allow(null).optional(),
 });
 
@@ -199,6 +202,7 @@ const customerProfileUpdateValidation = Joi.object({
     price: Joi.number().min(0).allow(null).optional(),
     description: Joi.string().allow('', null).optional(),
     password: Joi.string().min(8).optional(),
+    concurrentTabs: Joi.number().integer().min(1).max(10).optional(),
 });
 
 module.exports = [
