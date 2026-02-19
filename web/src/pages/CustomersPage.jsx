@@ -325,6 +325,20 @@ const CustomersPage = () => {
                         />
                     </Form.Item>
 
+                    <Form.Item
+                        name="concurrentTabs"
+                        label="Concurrent Tabs"
+                        tooltip="Number of browser tabs to use for concurrent uploads (1-10)"
+                    >
+                        <InputNumber
+                            style={{ width: '100%' }}
+                            placeholder="Enter concurrent tabs (1-10)"
+                            min={1}
+                            max={10}
+                            defaultValue={1}
+                        />
+                    </Form.Item>
+
                     <Form.Item name="subscriptionExpiredAt" label="Subscription Expires At">
                         <DatePicker
                             style={{ width: '100%' }}
