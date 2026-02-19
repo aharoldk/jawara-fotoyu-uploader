@@ -185,20 +185,6 @@ const CustomersPage = () => {
             width: 130,
         },
         {
-            title: 'Price',
-            dataIndex: 'price',
-            key: 'price',
-            width: 100,
-            render: (price) => price ? `Rp ${price.toLocaleString()}` : '-',
-        },
-        {
-            title: 'Description',
-            dataIndex: 'description',
-            key: 'description',
-            width: 200,
-            ellipsis: true,
-        },
-        {
             title: 'Subscription',
             dataIndex: 'subscriptionExpiredAt',
             key: 'subscriptionExpiredAt',
