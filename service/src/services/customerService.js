@@ -34,6 +34,7 @@ async function loginCustomer(username, password, deviceInfo = null, ipAddress = 
         price: customer.price,
         description: customer.description,
         concurrentTabs: customer.concurrentTabs,
+        batchSize: customer.batchSize,
         subscriptionExpiredAt: customer.subscriptionExpiredAt,
         createdAt: customer.createdAt,
         updatedAt: customer.updatedAt,

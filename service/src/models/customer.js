@@ -33,6 +33,13 @@ const customerSchema = new mongoose.Schema({
         min: 1,
         max: 10,
     },
+    batchSize: {
+        type: Number,
+        required: false,
+        default: 10,
+        min: 10,
+        max: 2000,
+    },
     subscriptionExpiredAt: {
         type: Date,
         required: false,

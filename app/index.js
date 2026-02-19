@@ -182,6 +182,14 @@ const router = {
                                 </div>
                                 
                                 <div class="form-group">
+                                    <label>Batch Size <span style="color: #a0aec0; font-size: 12px;">(10-2000, files per batch)</span></label>
+                                    <input type="number" id="profile-batch-size" value="${customer.batchSize || 10}" min="10" max="2000" />
+                                    <p style="color: #718096; font-size: 12px; margin-top: 4px;">
+                                        ℹ️ Number of files to upload per batch. Smaller = safer, Larger = faster. Recommended: 50-100.
+                                    </p>
+                                </div>
+                                
+                                <div class="form-group">
                                     <label>New Password <span style="color: #a0aec0; font-size: 12px;">(leave blank to keep current)</span></label>
                                     <input type="password" id="profile-new-password" placeholder="Enter new password" />
                                 </div>
@@ -228,14 +236,21 @@ const router = {
                         </div>
 
                         <div class="panel">
-                            <label>Batch Size <span style="color: #a0aec0; font-size: 12px;">(max 2000 for photos, 50 for videos)</span></label>
-                            <input id="batchSize" type="number" value="500" min="1" />
+                            <label>Concurrent Tabs <span style="color: #a0aec0; font-size: 12px;">(1-10, parallel uploads)</span></label>
+                            <input id="concurrentTabs" type="number" value="${customer.concurrentTabs || 1}" min="1" max="10" />
                         </div>
                     </div>
 
-                    <div class="panel">
-                        <label>Harga <span style="color: #e53e3e;">*</span></label>
-                        <input id="harga" type="number" placeholder="Enter harga" value="${customer.price || ''}" required />
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="panel">
+                            <label>Batch Size <span style="color: #a0aec0; font-size: 12px;">(10-2000, files per batch)</span></label>
+                            <input id="batchSize" type="number" value="${customer.batchSize || 10}" min="10" max="2000" />
+                        </div>
+
+                        <div class="panel">
+                            <label>Harga <span style="color: #e53e3e;">*</span></label>
+                            <input id="harga" type="number" placeholder="Enter harga" value="${customer.price || ''}" required />
+                        </div>
                     </div>
 
                     <div class="panel">
@@ -474,7 +489,8 @@ const router = {
 
     async startUpload() {
         const contentType = document.getElementById('contentType').value;
-        const batchSize = parseInt(document.getElementById('batchSize').value) || 500;
+        const batchSize = parseInt(document.getElementById('batchSize').value) || 10;
+        const concurrentTabs = parseInt(document.getElementById('concurrentTabs').value) || 1;
         const harga = document.getElementById('harga').value;
         const deskripsi = document.getElementById('deskripsi').value;
         const fototree = document.getElementById('fototree').value;
@@ -524,6 +540,20 @@ const router = {
             return;
         }
 
+        // Validate concurrent tabs
+        if (concurrentTabs < 1 || concurrentTabs > 10) {
+            this.log('Error: Concurrent Tabs must be between 1 and 10', 'error');
+            alert('Concurrent Tabs must be between 1 and 10');
+            return;
+        }
+
+        // Validate batch size
+        if (batchSize < 10 || batchSize > 2000) {
+            this.log('Error: Batch Size must be between 10 and 2000', 'error');
+            alert('Batch Size must be between 10 and 2000');
+            return;
+        }
+
         // Validate batch size based on content type
         const maxBatchSize = contentType === 'Photo' ? 2000 : 50;
         if (batchSize > maxBatchSize) {
@@ -540,11 +570,9 @@ const router = {
 
         const customer = JSON.parse(localStorage.getItem('customer') || '{}');
 
-        // Get concurrentTabs from customer settings (default to 1 if not set)
-        const concurrentTabs = customer.concurrentTabs || 1;
-
         this.log(`Starting upload bot...`);
         this.log(`Content Type: ${contentType}, Harga: ${harga}, Batch Size: ${batchSize}, Concurrent Tabs: ${concurrentTabs}`);
+        this.log(`Using ${concurrentTabs} tab(s) for parallel uploads`, 'info');
 
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
@@ -723,12 +751,19 @@ const router = {
         const price = document.getElementById('profile-price').value;
         const description = document.getElementById('profile-description').value;
         const concurrentTabs = parseInt(document.getElementById('profile-concurrent-tabs').value) || 1;
+        const batchSize = parseInt(document.getElementById('profile-batch-size').value) || 10;
         const newPassword = document.getElementById('profile-new-password').value;
         const confirmPassword = document.getElementById('profile-confirm-password').value;
 
         // Validate concurrentTabs
         if (concurrentTabs < 1 || concurrentTabs > 10) {
             alert('Concurrent Tabs must be between 1 and 10!');
+            return;
+        }
+
+        // Validate batchSize
+        if (batchSize < 10 || batchSize > 2000) {
+            alert('Batch Size must be between 10 and 2000!');
             return;
         }
 
@@ -752,6 +787,7 @@ const router = {
                 price: price ? parseFloat(price) : undefined,
                 description: description || undefined,
                 concurrentTabs: concurrentTabs,
+                batchSize: batchSize,
             };
 
             // Only include password if provided
@@ -782,7 +818,7 @@ const router = {
             localStorage.setItem('customer', JSON.stringify(updatedCustomer));
 
             alert('Profile updated successfully!');
-            this.log(`Profile updated: Concurrent Tabs set to ${concurrentTabs}`, 'success');
+            this.log(`Profile updated: Concurrent Tabs=${concurrentTabs}, Batch Size=${batchSize}`, 'success');
 
             // Close modal and refresh page
             document.getElementById('profile-modal').style.display = 'none';
