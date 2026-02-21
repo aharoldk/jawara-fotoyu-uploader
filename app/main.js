@@ -133,3 +133,9 @@ ipcMain.handle('stop-bot', async (event) => {
     return { success: true, message: 'Bot stop requested' };
 });
 
+// IPC handler for cancelling upload (from stop button)
+ipcMain.on('cancel-upload', (event) => {
+    botCancelled = true;
+    console.log('Upload cancellation requested by user');
+});
+

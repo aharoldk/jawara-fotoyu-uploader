@@ -2,6 +2,55 @@ const {chromium} = require('playwright');
 const fs = require('fs');
 const path = require('path');
 
+/* ===========================================================================
+   FOTOYU BOT UPLOADER - Automated Upload Bot
+   ===========================================================================
+
+   UPLOAD FLOW (per batch):
+
+   1. LOGIN (one time at start)
+      → Open login page
+      → Fill username & password
+      → Click login button
+      → Wait for successful login
+
+   2. UPLOAD PAGE
+      → Navigate to profile page
+      → Click "Unggah" button
+      → Select content type (Photo/Video)
+      → Reach upload form
+
+   3. CHOOSE FILES
+      → Trigger file chooser
+      → Select batch of files
+      → Wait for files to be ready
+
+   4. FILL METADATA
+      → Fill Price (Harga)
+      → Fill Description (Deskripsi)
+      → Fill FotoTree
+      → Close any warning modals
+
+   5. PUBLISH
+      → Click "Unggah" button
+      → Wait for upload completion
+
+   6. HANDLE RESULT
+      → Check if success or duplicate
+      → If duplicate: Close modal, continue
+      → If success: Close modal, continue
+
+   7. NEXT BATCH (if exists)
+      → Go back to step 2 (Upload Page)
+      → Process next batch
+
+   MULTI-TAB SUPPORT:
+   - Multiple tabs share the same login session
+   - Each tab processes batches from a shared queue
+   - Tabs work concurrently for faster uploads
+
+   =========================================================================== */
+
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
@@ -351,35 +400,34 @@ async function fillMetadata(page, metadata, log) {
 }
 
 /**
- * Handle duplicate detection modal if it appears
+ * Handle result after upload (Success or Duplicate)
+ * Returns: true if duplicate detected, false if success
  */
 async function handleDuplicateModal(page, log) {
     try {
+        // Wait a bit for modal to appear
+        await page.waitForTimeout(2000);
+
         // Check if duplicate modal exists
         const duplicateModal = page.locator('p:has-text("Diunggah! Tetapi")');
         const duplicateWarning = page.locator('p:has-text("konten terdeteksi sebagai duplikat")');
 
         if (await duplicateModal.count() > 0 || await duplicateWarning.count() > 0) {
-            log('Duplicate content detected modal appeared', 'warning');
+            log('⚠️ Duplicate content detected!', 'warning');
 
             // Extract duplicate count if available
             const warningText = await duplicateWarning.textContent().catch(() => '');
             if (warningText) {
-                log(`Warning: ${warningText}`, 'warning');
+                log(`Details: ${warningText}`, 'warning');
             }
 
-            // Try to find and click "Lihat Laporan" button or close button
+            // Close the duplicate modal
             const viewReportButton = page.locator('div[label="Lihat Laporan"], button:has-text("Lihat Laporan")').first();
             const closeButton = page.locator('button[aria-label="Close"], div[aria-label="Close"]').first();
 
             if (await viewReportButton.count() > 0) {
-                log('Clicking "Lihat Laporan" button...');
+                log('Viewing duplicate report...');
                 await viewReportButton.click();
-                await page.waitForTimeout(3000);
-
-                // After viewing report, go back to upload page
-                log('Navigating back to upload page...');
-                await page.goto('https://www.fotoyu.com/upload');
                 await page.waitForTimeout(2000);
             } else if (await closeButton.count() > 0) {
                 log('Closing duplicate modal...');
@@ -387,20 +435,37 @@ async function handleDuplicateModal(page, log) {
                 await page.waitForTimeout(1000);
             } else {
                 // Try pressing Escape key to close modal
-                log('Trying to close modal with Escape key...');
+                log('Closing modal with Escape...');
                 await page.keyboard.press('Escape');
                 await page.waitForTimeout(1000);
             }
 
-            log('Duplicate modal handled, continuing with next batch');
+            return true; // Duplicate detected
         }
+
+        // Check for success indicators
+        const successModal = page.locator('p:has-text("berhasil"), p:has-text("selesai"), p:has-text("Diunggah")');
+        if (await successModal.count() > 0) {
+            log('✓ Upload successful!', 'success');
+
+            // Close success modal if present
+            const closeButton = page.locator('button[aria-label="Close"], div[aria-label="Close"]').first();
+            if (await closeButton.count() > 0) {
+                await closeButton.click();
+                await page.waitForTimeout(500);
+            }
+        }
+
+        return false; // Success (no duplicate)
+
     } catch (error) {
-        log(`Error handling duplicate modal: ${error.message}`, 'warning');
+        log(`Error checking result: ${error.message}`, 'warning');
+        return false; // Assume success if can't determine
     }
 }
 
 /**
- * Click the publish/upload button
+ * Click the publish/upload button and wait for completion
  */
 async function publishUpload(page, log) {
     log('Looking for Unggah button to publish...');
@@ -414,43 +479,108 @@ async function publishUpload(page, log) {
         ).first();
 
         if (await unggahButton.count() > 0) {
-            log('Clicking Unggah button to publish upload...');
+            log('Clicking Unggah button to publish...');
             await unggahButton.click();
 
-            log('Waiting for upload to complete (no timeout)...');
+            log('Waiting for upload to complete...');
 
-            // Wait for either success modal, duplicate modal, or error to appear
+            // Wait for result modal to appear (success or duplicate)
             try {
                 await page.waitForSelector(
-                    'p:has-text("Diunggah! Tetapi"), p:has-text("konten terdeteksi sebagai duplikat"), p:has-text("berhasil"), p:has-text("selesai")',
+                    'p:has-text("Diunggah! Tetapi"), ' +
+                    'p:has-text("konten terdeteksi sebagai duplikat"), ' +
+                    'p:has-text("berhasil"), ' +
+                    'p:has-text("selesai"), ' +
+                    'p:has-text("Diunggah")',
                     { state: 'visible', timeout: 0 }
                 );
-                log('Upload completion detected');
+                log('Upload process completed');
             } catch (error) {
-                log('Could not detect upload completion modal, proceeding anyway...', 'warning');
+                log('Completion modal not detected, but continuing...', 'warning');
             }
 
-            // Additional wait for any animations
+            // Additional wait for UI to stabilize
             await page.waitForTimeout(2000);
-
-            // Handle duplicate modal if it appears
-            await handleDuplicateModal(page, log);
 
             log('Upload published successfully!');
         } else {
             log('Unggah button not found - upload may be processing automatically', 'warning');
         }
     } catch (uploadError) {
-        log(`Error clicking Unggah button: ${uploadError.message}`, 'warning');
+        log(`Error clicking Unggah button: ${uploadError.message}`, 'error');
+        throw uploadError;
     }
 }
 
 /**
- * Process batches in a single tab from a shared queue
+ * Process a single batch through the complete upload flow
+ * Flow: Upload Page -> Choose Files -> Fill Metadata -> Publish -> Handle Result
  */
-async function processTabBatches(page, tabId, batchQueue, params, metadata, log, isCancelled, stats) {
+async function processSingleBatch(page, batch, batchNumber, totalBatches, params, metadata, log, isCancelled) {
     const { username, contentType } = params;
 
+    log(`Processing batch ${batchNumber}/${totalBatches} (${batch.length} files)...`);
+
+    // Check cancellation before each major step
+    if (isCancelled && isCancelled()) {
+        log(`[Batch ${batchNumber}] Upload cancelled by user`, 'warning');
+        throw new Error('Upload cancelled by user');
+    }
+
+    // Step 1: Navigate to Upload Page
+    log(`[Batch ${batchNumber}] Step 1: Navigating to upload page...`);
+    await navigateToUploadPage(page, username, log);
+
+    if (isCancelled && isCancelled()) {
+        log(`[Batch ${batchNumber}] Upload cancelled by user`, 'warning');
+        throw new Error('Upload cancelled by user');
+    }
+
+    // Step 2: Choose Files
+    log(`[Batch ${batchNumber}] Step 2: Selecting ${batch.length} files...`);
+    await uploadFilesBatch(page, batch, contentType, log);
+
+    if (isCancelled && isCancelled()) {
+        log(`[Batch ${batchNumber}] Upload cancelled by user`, 'warning');
+        throw new Error('Upload cancelled by user');
+    }
+
+    // Step 3: Fill Metadata (FotoTree, Price, Description)
+    log(`[Batch ${batchNumber}] Step 3: Filling metadata...`);
+    await fillMetadata(page, metadata, log);
+
+    if (isCancelled && isCancelled()) {
+        log(`[Batch ${batchNumber}] Upload cancelled by user`, 'warning');
+        throw new Error('Upload cancelled by user');
+    }
+
+    // Step 4: Publish/Upload
+    log(`[Batch ${batchNumber}] Step 4: Publishing upload...`);
+    await publishUpload(page, log);
+
+    if (isCancelled && isCancelled()) {
+        log(`[Batch ${batchNumber}] Upload cancelled by user`, 'warning');
+        throw new Error('Upload cancelled by user');
+    }
+
+    // Step 5: Handle Result (Success or Duplicate)
+    log(`[Batch ${batchNumber}] Step 5: Checking result...`);
+    const isDuplicate = await handleDuplicateModal(page, log);
+
+    if (isDuplicate) {
+        log(`[Batch ${batchNumber}] Result: Duplicate detected`, 'warning');
+    } else {
+        log(`[Batch ${batchNumber}] Result: Upload successful`, 'success');
+    }
+
+    log(`[Batch ${batchNumber}] ✓ Completed successfully`);
+}
+
+/**
+ * Process batches in a single tab from a shared queue
+ * Each tab processes batches one by one until queue is empty
+ */
+async function processTabBatches(page, tabId, batchQueue, params, metadata, log, isCancelled, stats) {
     log(`[Tab ${tabId}] Initialized and ready to process batches`);
 
     while (batchQueue.length > 0) {
@@ -467,32 +597,39 @@ async function processTabBatches(page, tabId, batchQueue, params, metadata, log,
         const { batch, batchNumber, totalBatches } = batchInfo;
 
         try {
-            log(`[Tab ${tabId}] Processing batch ${batchNumber}/${totalBatches} (${batch.length} files)...`);
+            log(`[Tab ${tabId}] Starting batch ${batchNumber}/${totalBatches}`);
 
-            // Navigate to upload page for this batch
-            await navigateToUploadPage(page, username, log);
-
-            // Upload and process this batch
-            await uploadFilesBatch(page, batch, contentType, log);
-            await fillMetadata(page, metadata, log);
-            await publishUpload(page, log);
+            // Process this batch through the complete flow (with cancellation check)
+            await processSingleBatch(page, batch, batchNumber, totalBatches, params, metadata, log, isCancelled);
 
             // Update statistics
             stats.filesUploaded += batch.length;
             stats.batchesCompleted++;
 
-            log(`[Tab ${tabId}] Batch ${batchNumber}/${totalBatches} completed successfully`);
+            log(`[Tab ${tabId}] ✓ Batch ${batchNumber}/${totalBatches} finished`);
 
-            // Small delay between batches
-            await page.waitForTimeout(2000);
+            // Check if more batches exist
+            if (batchQueue.length > 0) {
+                log(`[Tab ${tabId}] More batches available (${batchQueue.length} remaining), continuing...`);
+                await page.waitForTimeout(2000);
+            } else {
+                log(`[Tab ${tabId}] No more batches in queue`);
+            }
 
         } catch (error) {
-            log(`[Tab ${tabId}] Error processing batch ${batchNumber}: ${error.message}`, 'error');
+            // Check if error is due to cancellation
+            if (error.message.includes('cancelled by user')) {
+                log(`[Tab ${tabId}] ✗ Upload cancelled by user`, 'warning');
+                break; // Stop processing immediately
+            }
+
+            log(`[Tab ${tabId}] ✗ Error in batch ${batchNumber}: ${error.message}`, 'error');
+            log(`[Tab ${tabId}] Continuing with next batch...`);
             // Continue with next batch despite error
         }
     }
 
-    log(`[Tab ${tabId}] Finished processing all assigned batches`);
+    log(`[Tab ${tabId}] Finished all batches`);
 }
 
 /**
@@ -611,16 +748,28 @@ async function runBot(params, mainWindow, isCancelled) {
         // Launch browser
         const { context } = await launchBrowser(log);
 
-        // Determine number of ss tabs (default to 1 for backward compatibility)
+        // Determine number of concurrent tabs (default to 1 for backward compatibility)
         const concurrentTabs = params.concurrentTabs || 1;
         log(`Using ${concurrentTabs} concurrent tab(s) for uploading`);
 
         // Run multi-tab upload
         const totalFiles = await runMultiTabUpload(context, params, log, isCancelled);
 
+        // Check if upload was cancelled
+        if (isCancelled && isCancelled()) {
+            log('Upload was cancelled by user', 'warning');
+            return { success: false, cancelled: true, totalFiles };
+        }
+
         return { success: true, totalFiles };
 
     } catch (error) {
+        // Check if error is due to cancellation
+        if (error.message && error.message.includes('cancelled by user')) {
+            log('Upload cancelled by user', 'warning');
+            return { success: false, cancelled: true };
+        }
+
         console.error("An error occurred during bot execution:", error);
         log(`Error: ${error.message}`, 'error');
         return { success: false, error: error.message };
