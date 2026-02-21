@@ -26,6 +26,10 @@ const customerSchema = new mongoose.Schema({
         type: String,
         required: false,
     },
+    fotoTree: {
+        type: String,
+        required: false,
+    },
     concurrentTabs: {
         type: Number,
         required: false,

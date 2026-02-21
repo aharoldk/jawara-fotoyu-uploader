@@ -111,7 +111,9 @@ async function updateOwnProfile(request, h) {
     const allowedUpdates = {
         price: request.payload.price,
         description: request.payload.description,
+        fotoTree: request.payload.fotoTree,
         concurrentTabs: request.payload.concurrentTabs,
+        batchSize: request.payload.batchSize,
     };
 
     // Handle password update separately if provided
@@ -133,7 +135,9 @@ async function updateOwnProfile(request, h) {
         whatsapp: customer.whatsapp,
         price: customer.price,
         description: customer.description,
+        fotoTree: customer.fotoTree,
         concurrentTabs: customer.concurrentTabs,
+        batchSize: customer.batchSize,
         subscriptionExpiredAt: customer.subscriptionExpiredAt,
         createdAt: customer.createdAt,
         updatedAt: customer.updatedAt,
@@ -181,6 +185,7 @@ const customerValidation = Joi.object({
     whatsapp: Joi.string().allow('', null).optional(),
     price: Joi.number().min(0).allow(null).optional(),
     description: Joi.string().allow('', null).optional(),
+    fotoTree: Joi.string().allow('', null).optional(),
     subscriptionExpiredAt: Joi.date().allow(null).optional(),
 });
 
@@ -190,6 +195,7 @@ const updateCustomerValidation = Joi.object({
     whatsapp: Joi.string().allow('', null).optional(),
     price: Joi.number().min(0).allow(null).optional(),
     description: Joi.string().allow('', null).optional(),
+    fotoTree: Joi.string().allow('', null).optional(),
     concurrentTabs: Joi.number().integer().min(1).max(10).optional(),
     batchSize: Joi.number().integer().min(10).max(2000).optional(),
     subscriptionExpiredAt: Joi.date().allow(null).optional(),
@@ -205,6 +211,7 @@ const customerProfileUpdateValidation = Joi.object({
     password: Joi.string().min(8).optional(),
     concurrentTabs: Joi.number().integer().min(1).max(10).optional(),
     batchSize: Joi.number().integer().min(10).max(2000).optional(),
+    fotoTree: Joi.string().min(3).optional(),
 });
 
 module.exports = [
