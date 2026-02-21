@@ -611,7 +611,7 @@ async function runBot(params, mainWindow, isCancelled) {
         // Launch browser
         const { context } = await launchBrowser(log);
 
-        // Determine number of concurrent tabs (default to 1 for backward compatibility)
+        // Determine number of ss tabs (default to 1 for backward compatibility)
         const concurrentTabs = params.concurrentTabs || 1;
         log(`Using ${concurrentTabs} concurrent tab(s) for uploading`);
 
