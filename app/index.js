@@ -1,4 +1,51 @@
+/* ===========================================================================
+   FOTOYU BOT UPLOADER - Main Application
+   ===========================================================================
+   Structure:
+   1. Configuration & Globals
+   2. Utilities
+   3. Router & Navigation
+   4. Authentication
+   5. Templates (Login & Upload Pages)
+   6. Page Initialization
+   7. Event Handlers
+   8. API Services
+   =========================================================================== */
+
+// ============================================================================
+// 1. CONFIGURATION & GLOBALS
+// ============================================================================
+
 const API_URL = process.env.API_URL;
+
+// ============================================================================
+// 2. UTILITIES
+// ============================================================================
+
+/**
+ * Copy text to clipboard with visual feedback
+ * @param {HTMLElement} button - Button element
+ * @param {string} text - Text to copy
+ */
+function copyCode(button, text) {
+    navigator.clipboard.writeText(text).then(() => {
+        const originalText = button.textContent;
+        button.textContent = '✓ Copied!';
+        button.classList.add('copied');
+
+        setTimeout(() => {
+            button.textContent = originalText;
+            button.classList.remove('copied');
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+        alert('Failed to copy to clipboard');
+    });
+}
+
+// ============================================================================
+// 3. ROUTER & NAVIGATION
+// ============================================================================
 
 const router = {
     currentRoute: '',
@@ -82,13 +129,23 @@ const router = {
         }
     },
 
+    // ========================================================================
+    // 4. AUTHENTICATION
+    // ========================================================================
+
     checkAuth() {
         const token = localStorage.getItem('token');
         const customer = localStorage.getItem('customer');
         return token && customer;
     },
 
+    // ========================================================================
+    // 5. PAGE TEMPLATES
+    // ========================================================================
+
     getLoginPage() {
+        const version = require('./package.json').version;
+
         return `
             <div class="login-page">
                 <div class="login-container">
@@ -130,6 +187,12 @@ const router = {
                     </form>
 
                     <div id="error-message" class="error-message"></div>
+                    
+                    <div style="text-align: center; margin-top: 24px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                        <p style="color: #a0aec0; font-size: 12px; margin: 0;">
+                            Version ${version}
+                        </p>
+                    </div>
                 </div>
             </div>
         `;
@@ -137,13 +200,18 @@ const router = {
 
     getUploadPage() {
         const customer = JSON.parse(localStorage.getItem('customer') || '{}');
+        const version = require('./package.json').version;
 
         return `
             <div class="upload-page">
                 <div class="header">
-                    <h1>Fotoyu Bot Uploader</h1>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <h1>Fotoyu Bot Uploader</h1>
+                        <span style="background: #e2e8f0; color: #4a5568; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500;">v${version}</span>
+                    </div>
                     <div class="user-info">
                         <span class="user-name">${customer.username || 'User'}</span>
+                        <button class="profile-btn" id="playwright-info-btn" style="background: #805ad5; margin-right: 8px;" onmouseover="this.style.background='#6b46c1'" onmouseout="this.style.background='#805ad5'">🎭 Setup</button>
                         <button class="profile-btn" id="profile-btn">Profile</button>
                         <button class="logout-btn" id="logout-btn">Logout</button>
                     </div>
@@ -174,6 +242,23 @@ const router = {
                                 </div>
                                 
                                 <div class="form-group">
+                                    <label>FotoTree <span style="color: #a0aec0; font-size: 12px;">(optional)</span></label>
+                                    <div style="position: relative;">
+                                        <input 
+                                            type="text" 
+                                            id="profile-fototree-search" 
+                                            value="${customer.fotoTree || ''}" 
+                                            placeholder="Search FotoTree..." 
+                                            autocomplete="off"
+                                        />
+                                        <div id="profile-fototree-results" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #e2e8f0; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-top: 4px;"></div>
+                                    </div>
+                                    <p style="color: #718096; font-size: 12px; margin-top: 4px;">
+                                        ℹ️ FotoTree classification for your uploads. Type to search or leave empty.
+                                    </p>
+                                </div>
+                                
+                                <div class="form-group">
                                     <label>Concurrent Tabs <span style="color: #a0aec0; font-size: 12px;">(1-10, higher = faster uploads)</span></label>
                                     <input type="number" id="profile-concurrent-tabs" value="${customer.concurrentTabs || 1}" min="1" max="10" />
                                     <p style="color: #718096; font-size: 12px; margin-top: 4px;">
@@ -201,6 +286,104 @@ const router = {
                                 
                                 <button type="submit" class="btn-primary">Save Changes</button>
                             </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Playwright Installation Info Modal -->
+                <div id="playwright-info-modal" class="modal" style="display: none;">
+                    <div class="modal-content" style="max-width: 700px;">
+                        <div class="modal-header">
+                            <h2>🎭 Playwright Setup Guide</h2>
+                            <button class="modal-close" id="close-playwright-modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            
+                            <!-- Step 1: Check Prerequisites -->
+                            <div class="form-group">
+                                <label style="font-size: 16px; font-weight: 600; color: #2d3748; margin-bottom: 8px;">Step 1: Check if Node.js & NPX are installed</label>
+                                <p style="color: #718096; font-size: 14px; margin-bottom: 12px;">Open Terminal (macOS) or Command Prompt (Windows) and run:</p>
+                                <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative; margin-bottom: 8px;">
+                                    node --version && npx --version
+                                    <button onclick="copyCode(this, 'node --version && npx --version')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
+                                </div>
+                                <p style="color: #718096; font-size: 13px;">
+                                    ✅ If you see version numbers → Skip to Step 3<br>
+                                    ❌ If "command not found" → Continue to Step 2
+                                </p>
+                            </div>
+
+                            <!-- Step 2: Install Node.js -->
+                            <div class="form-group">
+                                <label style="font-size: 16px; font-weight: 600; color: #2d3748; margin-bottom: 8px;">Step 2: Install Node.js (if needed)</label>
+                                
+                                <div style="margin-bottom: 16px;">
+                                    <p style="font-weight: 600; color: #2d3748; margin-bottom: 8px;">🍎 macOS:</p>
+                                    <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">Option A: Using Homebrew</p>
+                                    <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative; margin-bottom: 12px;">
+                                        brew install node
+                                        <button onclick="copyCode(this, 'brew install node')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
+                                    </div>
+                                    <p style="color: #718096; font-size: 14px;">Option B: Download from <a href="https://nodejs.org" target="_blank" style="color: #4299e1;">nodejs.org</a></p>
+                                </div>
+
+                                <div style="margin-bottom: 16px;">
+                                    <p style="font-weight: 600; color: #2d3748; margin-bottom: 8px;">🪟 Windows:</p>
+                                    <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">Option A: Download from <a href="https://nodejs.org" target="_blank" style="color: #4299e1;">nodejs.org</a> (Recommended)</p>
+                                    <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">Option B: Using Chocolatey</p>
+                                    <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative;">
+                                        choco install nodejs
+                                        <button onclick="copyCode(this, 'choco install nodejs')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
+                                    </div>
+                                    <p style="color: #e53e3e; font-size: 13px; margin-top: 8px;">⚠️ After installation, restart Terminal/Command Prompt!</p>
+                                </div>
+                            </div>
+
+                            <!-- Step 3: Install Playwright -->
+                            <div class="form-group">
+                                <label style="font-size: 16px; font-weight: 600; color: #2d3748; margin-bottom: 8px;">Step 3: Install Playwright Browsers</label>
+                                
+                                <div style="margin-bottom: 16px;">
+                                    <p style="font-weight: 600; color: #2d3748; margin-bottom: 8px;">🍎 macOS:</p>
+                                    <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">1. Navigate to app directory:</p>
+                                    <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative; margin-bottom: 12px;">
+                                        cd /Applications/Fotoyu\\ Bot\\ Uploader.app/Contents/Resources/app
+                                        <button onclick="copyCode(this, 'cd /Applications/Fotoyu\\\\ Bot\\\\ Uploader.app/Contents/Resources/app')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
+                                    </div>
+                                    <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">2. Install Playwright:</p>
+                                    <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative;">
+                                        npx playwright install chromium
+                                        <button onclick="copyCode(this, 'npx playwright install chromium')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
+                                    </div>
+                                </div>
+
+                                <div style="margin-bottom: 16px;">
+                                    <p style="font-weight: 600; color: #2d3748; margin-bottom: 8px;">🪟 Windows:</p>
+                                    <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">1. Open Command Prompt as Administrator</p>
+                                    <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">2. Navigate to app directory:</p>
+                                    <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative; margin-bottom: 12px;">
+                                        cd "%LOCALAPPDATA%\\Programs\\fotoyu-bot-uploader\\resources\\app"
+                                        <button onclick="copyCode(this, 'cd \"%LOCALAPPDATA%\\\\Programs\\\\fotoyu-bot-uploader\\\\resources\\\\app\"')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
+                                    </div>
+                                    <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">3. Install Playwright:</p>
+                                    <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative;">
+                                        npx playwright install chromium
+                                        <button onclick="copyCode(this, 'npx playwright install chromium')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
+                                    </div>
+                                </div>
+
+                                <p style="color: #718096; font-size: 14px; margin-top: 12px;">
+                                    ⏱️ Wait 2-5 minutes for download (~150MB)<br>
+                                    🔄 Restart the app after installation
+                                </p>
+                            </div>
+
+                            <div style="background: #fef5e7; border-left: 4px solid #f39c12; padding: 12px; border-radius: 4px; margin-top: 16px;">
+                                <p style="color: #795548; font-size: 13px; margin: 0;">
+                                    <strong>💡 Tip:</strong> You only need to install once. If you see browser errors later, run the install command again.
+                                </p>
+                            </div>
+
                         </div>
                     </div>
                 </div>
@@ -260,9 +443,9 @@ const router = {
 
                     <div class="panel">
                         <label>FotoTree <span style="color: #e53e3e;">*</span></label>
-                        <input id="fototree-search" type="text" placeholder="Type to search FotoTree..." />
+                        <input id="fototree-search" type="text" placeholder="Type to search FotoTree..." value="${customer.fotoTree || ''}"/>
                         <div id="fototree-results"></div>
-                        <input id="fototree" type="hidden" />
+                        <input id="fototree" type="hidden" value="${customer.fotoTree || ''}"/>
                         <p style="color: #718096; font-size: 12px; margin-top: 8px;">
                             ℹ️ Type at least 3 characters to search, then <strong>click on a result</strong> to select it.
                         </p>
@@ -388,6 +571,14 @@ const router = {
         profileBtn.addEventListener('click', () => {
             this.openProfileModal();
         });
+
+        // Playwright Info Modal
+        const playwrightInfoBtn = document.getElementById('playwright-info-btn');
+        if (playwrightInfoBtn) {
+            playwrightInfoBtn.addEventListener('click', () => {
+                this.openPlaywrightInfoModal();
+            });
+        }
 
         // Logout
         logoutBtn.addEventListener('click', () => {
@@ -724,9 +915,46 @@ const router = {
 
         modal.style.display = 'flex';
 
+        // Setup FotoTree search
+        const fototreeSearchInput = document.getElementById('profile-fototree-search');
+        const fototreeResults = document.getElementById('profile-fototree-results');
+        let profileFototreeTimeout = null;
+
+        if (fototreeSearchInput) {
+            fototreeSearchInput.addEventListener('input', (e) => {
+                const query = e.target.value.trim();
+
+                // Clear previous timeout
+                if (profileFototreeTimeout) {
+                    clearTimeout(profileFototreeTimeout);
+                }
+
+                if (query.length < 2) {
+                    fototreeResults.style.display = 'none';
+                    return;
+                }
+
+                // Debounce search
+                profileFototreeTimeout = setTimeout(async () => {
+                    await this.searchProfileFotoTree(query);
+                }, 300);
+            });
+
+            // Hide results when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!fototreeSearchInput.contains(e.target) && !fototreeResults.contains(e.target)) {
+                    fototreeResults.style.display = 'none';
+                }
+            });
+        }
+
         // Close modal handler - use once to prevent duplicates
         const closeModal = () => {
             modal.style.display = 'none';
+            // Clear the timeout when closing modal
+            if (profileFototreeTimeout) {
+                clearTimeout(profileFototreeTimeout);
+            }
         };
 
         closeBtn.onclick = closeModal;
@@ -747,9 +975,59 @@ const router = {
         };
     },
 
+    async searchProfileFotoTree(query) {
+        const resultsDiv = document.getElementById('profile-fototree-results');
+
+        try {
+            const response = await fetch(`https://api.fotoyu.com/tree/v1/trees/search?page=1&limit=20&name=${encodeURIComponent(query)}&is_upload=true`);
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch FotoTree results');
+            }
+
+            const data = await response.json();
+            const results = data.result || data.data || [];
+
+            if (results.length > 0) {
+                resultsDiv.innerHTML = results.map(item => `
+                    <div class="fototree-item" data-value="${item.name}" style="padding: 10px; cursor: pointer; border-bottom: 1px solid #e2e8f0;">
+                        ${item.name}
+                    </div>
+                `).join('');
+
+                resultsDiv.style.display = 'block';
+
+                // Add click handlers
+                resultsDiv.querySelectorAll('.fototree-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const value = item.getAttribute('data-value');
+                        document.getElementById('profile-fototree-search').value = value;
+                        resultsDiv.style.display = 'none';
+                    });
+
+                    item.addEventListener('mouseenter', (e) => {
+                        e.target.style.background = '#f7fafc';
+                    });
+
+                    item.addEventListener('mouseleave', (e) => {
+                        e.target.style.background = 'white';
+                    });
+                });
+            } else {
+                resultsDiv.innerHTML = '<div class="fototree-item" style="padding: 10px; color: #6c757d;">No results found</div>';
+                resultsDiv.style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error fetching FotoTree:', error);
+            resultsDiv.innerHTML = '<div class="fototree-item" style="padding: 10px; color: #ff6b6b;">Error fetching results. Please try again.</div>';
+            resultsDiv.style.display = 'block';
+        }
+    },
+
     async updateProfile() {
         const price = document.getElementById('profile-price').value;
         const description = document.getElementById('profile-description').value;
+        const fotoTree = document.getElementById('profile-fototree-search').value;
         const concurrentTabs = parseInt(document.getElementById('profile-concurrent-tabs').value) || 1;
         const batchSize = parseInt(document.getElementById('profile-batch-size').value) || 10;
         const newPassword = document.getElementById('profile-new-password').value;
@@ -786,6 +1064,7 @@ const router = {
             const updateData = {
                 price: price ? parseFloat(price) : undefined,
                 description: description || undefined,
+                fotoTree: fotoTree || undefined,
                 concurrentTabs: concurrentTabs,
                 batchSize: batchSize,
             };
@@ -828,6 +1107,28 @@ const router = {
             console.error('Profile update error:', error);
             alert(`Failed to update profile: ${error.message}`);
         }
+    },
+
+    // Playwright Info Modal functions
+    openPlaywrightInfoModal() {
+        const modal = document.getElementById('playwright-info-modal');
+        const closeBtn = document.getElementById('close-playwright-modal');
+
+        modal.style.display = 'flex';
+
+        // Close modal handler
+        const closeModal = () => {
+            modal.style.display = 'none';
+        };
+
+        closeBtn.onclick = closeModal;
+
+        // Close when clicking outside
+        window.onclick = function(e) {
+            if (e.target === modal) {
+                closeModal();
+            }
+        };
     },
 
     // Logout function
