@@ -1,4 +1,5 @@
 const Joi = require('joi');
+const Boom = require('@hapi/boom');
 const preHandler = require('../utils/preHandler');
 const { authMiddleware, customerAuthMiddleware } = require('../utils/authMiddleware');
 const customerService = require('../services/customerService');
@@ -23,52 +24,56 @@ async function loginCustomer(request, h) {
 
 async function logoutCustomer(request, h) {
     const authHeader = request.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-        const token = authHeader.substring(7);
-        await invalidateSession(token);
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        throw Boom.unauthorized('No token provided');
     }
 
-    return { message: 'Logged out successfully' };
+    const token = authHeader.substring(7);
+
+    try {
+        await invalidateSession(token);
+        return { message: 'Logged out successfully' };
+    } catch (error) {
+        throw Boom.internal('Failed to logout', error);
+    }
 }
 
 async function validateCustomerSession(request, h) {
     const authHeader = request.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return h.response({
-            valid: false,
-            message: 'No token provided'
-        }).code(200);
+        throw Boom.unauthorized('No token provided');
     }
 
     const token = authHeader.substring(7);
     const { verify } = require('../utils/jwt');
     const { validateSession } = require('../repositories/sessionRepository');
 
-    // Verify JWT
-    const decoded = verify(token);
-    if (!decoded || decoded.role !== 'customer') {
-        return h.response({
-            valid: false,
-            message: 'Invalid token'
-        }).code(200);
-    }
+    try {
+        // Verify JWT
+        const decoded = verify(token);
+        if (!decoded || decoded.role !== 'customer') {
+            throw Boom.unauthorized('Invalid token');
+        }
 
-    // Validate session
-    const session = await validateSession(token);
-    if (!session) {
-        return h.response({
-            valid: false,
-            message: 'Session expired or invalid',
-            code: 'SESSION_EXPIRED'
-        }).code(200);
-    }
+        // Validate session
+        const session = await validateSession(token);
+        if (!session) {
+            throw Boom.unauthorized('Session expired or invalid');
+        }
 
-    return {
-        valid: true,
-        message: 'Session is valid',
-        customerId: decoded.id
-    };
+        return {
+            valid: true,
+            message: 'Session is valid',
+            customerId: decoded.id
+        };
+    } catch (error) {
+        if (error.isBoom) {
+            throw error;
+        }
+        throw Boom.unauthorized('Invalid or expired token');
+    }
 }
 
 async function getAllCustomers(request, h) {
@@ -81,7 +86,7 @@ async function getCustomer(request, h) {
     const customer = await findCustomerById(id);
 
     if (!customer) {
-        return h.response({ error: 'Customer not found' }).code(404);
+        throw Boom.notFound('Customer not found');
     }
 
     return { customer };
@@ -97,7 +102,7 @@ async function updateExistingCustomer(request, h) {
     const customer = await updateCustomer(id, request.payload);
 
     if (!customer) {
-        return h.response({ error: 'Customer not found' }).code(404);
+        throw Boom.notFound('Customer not found');
     }
 
     return { customer, message: 'Customer updated successfully' };
@@ -124,7 +129,7 @@ async function updateOwnProfile(request, h) {
     const customer = await updateCustomer(customerId, allowedUpdates);
 
     if (!customer) {
-        return h.response({ error: 'Customer not found' }).code(404);
+        throw Boom.notFound('Customer not found');
     }
 
     // Return updated customer details (exclude password)
@@ -151,7 +156,7 @@ async function deleteExistingCustomer(request, h) {
     const customer = await deleteCustomer(id);
 
     if (!customer) {
-        return h.response({ error: 'Customer not found' }).code(404);
+        throw Boom.notFound('Customer not found');
     }
 
     return { message: 'Customer deleted successfully' };
@@ -164,7 +169,7 @@ async function updateCustomerSubscription(request, h) {
     const customer = await updateSubscription(id, subscriptionExpiredAt);
 
     if (!customer) {
-        return h.response({ error: 'Customer not found' }).code(404);
+        throw Boom.notFound('Customer not found');
     }
 
     return { customer, message: 'Subscription updated successfully' };

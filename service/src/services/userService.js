@@ -1,10 +1,11 @@
+const Boom = require('@hapi/boom');
 const { findUserByUsernameAndPassword } = require('../repositories/userRepository');
 const { sign } = require('../utils/jwt');
 
 async function loginUser(username, password) {
     const user = await findUserByUsernameAndPassword(username, password);
     if (!user) {
-        throw new Error('Invalid credentials');
+        throw Boom.unauthorized('Invalid credentials');
     }
 
     const token = sign({ id: user._id, role: 'user' });
