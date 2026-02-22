@@ -3,8 +3,8 @@
  */
 function getSetupModalTemplate() {
     return `
-        <div id="playwright-info-modal" class="modal" style="display: none;">
-            <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+        <div id="playwright-info-modal" class="modal" style="display: none; z-index: 10000;">
+            <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto; z-index: 10001; position: relative;">
                 <div class="modal-header">
                     <h2 style="display: flex; align-items: center; gap: 10px; margin: 0;">
                         <span>🎭</span>
@@ -112,6 +112,59 @@ function getHelpContent() {
 
 function getSetupContent() {
     return `
+        <!-- Important Notice -->
+        <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 16px; border-radius: 8px; margin-bottom: 24px; color: white;">
+            <h3 style="margin: 0 0 12px 0; font-size: 18px; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 24px;">⚠️</span>
+                <span>First Time Setup Required!</span>
+            </h3>
+            <p style="margin: 0; line-height: 1.6; font-size: 14px;">
+                Before using this app, you <strong>MUST</strong> install Playwright browsers. This is a <strong>ONE-TIME</strong> setup that takes 2-5 minutes.
+            </p>
+        </div>
+
+        <!-- Quick Install for Development -->
+        <div style="background: #f0fdf4; border: 2px solid #86efac; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+            <h3 style="margin: 0 0 12px 0; font-size: 16px; color: #166534; display: flex; align-items: center; gap: 8px;">
+                <span>💻</span>
+                <span>Quick Install (Current Setup)</span>
+            </h3>
+            <ol style="margin: 0; padding-left: 20px; color: #166534; line-height: 1.8;">
+                <li><strong>Open Terminal</strong> (press Cmd+Space, type "Terminal")</li>
+                <li><strong>Navigate to the project folder:</strong></li>
+            </ol>
+            <div style="background: #1e293b; color: #f1f5f9; padding: 16px; border-radius: 6px; font-family: monospace; font-size: 14px; position: relative; margin: 12px 0; overflow-x: auto;">
+                cd /Users/harold/personal/fotoyu-bot-uploader/app
+                <button onclick="copyCode(this, 'cd /Users/harold/personal/fotoyu-bot-uploader/app')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">📋 Copy</button>
+            </div>
+            <ol start="3" style="margin: 0; padding-left: 20px; color: #166534; line-height: 1.8;">
+                <li><strong>Run the installation command:</strong></li>
+            </ol>
+            <div style="background: #1e293b; color: #f1f5f9; padding: 16px; border-radius: 6px; font-family: monospace; font-size: 14px; position: relative; margin: 12px 0; overflow-x: auto;">
+                npx playwright@1.57.0 install
+                <button onclick="copyCode(this, 'npx playwright@1.57.0 install')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">📋 Copy</button>
+            </div>
+            <ol start="4" style="margin: 0; padding-left: 20px; color: #166534; line-height: 1.8;">
+                <li><strong>Press Enter</strong> and wait 2-5 minutes for download (~150MB)</li>
+                <li><strong>Restart the app</strong> when done</li>
+            </ol>
+        </div>
+
+        <!-- Alternative: One Command -->
+        <div style="background: #eff6ff; border: 2px solid #93c5fd; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+            <h3 style="margin: 0 0 12px 0; font-size: 16px; color: #1e40af; display: flex; align-items: center; gap: 8px;">
+                <span>⚡</span>
+                <span>One-Line Command (Alternative)</span>
+            </h3>
+            <p style="color: #1e40af; margin-bottom: 12px; font-size: 14px;">
+                Copy and paste this single command into Terminal:
+            </p>
+            <div style="background: #1e293b; color: #f1f5f9; padding: 16px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative; margin: 12px 0; overflow-x: auto;">
+                cd /Users/harold/personal/fotoyu-bot-uploader/app && npx playwright@1.57.0 install
+                <button onclick="copyCode(this, 'cd /Users/harold/personal/fotoyu-bot-uploader/app && npx playwright@1.57.0 install')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">📋 Copy</button>
+            </div>
+        </div>
+
         <!-- Step 1: Check Prerequisites -->
         <div class="form-group">
             <label style="font-size: 16px; font-weight: 600; color: #2d3748; margin-bottom: 8px;">Step 1: Check if Node.js & NPX are installed</label>
@@ -158,30 +211,20 @@ function getSetupContent() {
 
             <div style="margin-bottom: 16px;">
                 <p style="font-weight: 600; color: #2d3748; margin-bottom: 8px;">🍎 macOS:</p>
-                <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">1. Navigate to app directory:</p>
-                <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative; margin-bottom: 12px;">
-                    cd /Applications/Fotoyu\\ Bot\\ Uploader.app/Contents/Resources/app
-                    <button onclick="copyCode(this, 'cd /Applications/Fotoyu\\\\ Bot\\\\ Uploader.app/Contents/Resources/app')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
-                </div>
-                <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">2. Install Playwright:</p>
+                <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">1. Install Playwright:</p>
                 <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative;">
-                    npx playwright install chromium
-                    <button onclick="copyCode(this, 'npx playwright install chromium')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
+                    npx playwright@1.57.0 install
+                    <button onclick="copyCode(this, 'npx playwright@1.57.0 install')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
                 </div>
             </div>
 
             <div style="margin-bottom: 16px;">
                 <p style="font-weight: 600; color: #2d3748; margin-bottom: 8px;">🪟 Windows:</p>
                 <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">1. Open Command Prompt as Administrator</p>
-                <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">2. Navigate to app directory:</p>
-                <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative; margin-bottom: 12px;">
-                    cd "%LOCALAPPDATA%\\Programs\\fotoyu-bot-uploader\\resources\\app"
-                    <button onclick="copyCode(this, 'cd \"%LOCALAPPDATA%\\\\Programs\\\\fotoyu-bot-uploader\\\\resources\\\\app\"')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
-                </div>
-                <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">3. Install Playwright:</p>
+                <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">2. Install Playwright:</p>
                 <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative;">
-                    npx playwright install chromium
-                    <button onclick="copyCode(this, 'npx playwright install chromium')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
+                    npx playwright@1.57.0 install
+                    <button onclick="copyCode(this, 'npx playwright@1.57.0 install')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
                 </div>
             </div>
 

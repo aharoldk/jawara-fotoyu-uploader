@@ -12,8 +12,8 @@ function getProfileModalTemplate() {
     const customer = JSON.parse(localStorage.getItem('customer') || '{}');
 
     return `
-        <div id="profile-modal" class="modal" style="display: none;">
-            <div class="modal-content">
+        <div id="profile-modal" class="modal" style="display: none; z-index: 10000;">
+            <div class="modal-content" style="z-index: 10001; position: relative;">
                 <div class="modal-header">
                     <h2>Profile Settings</h2>
                     <button class="modal-close" id="close-profile-modal">&times;</button>
