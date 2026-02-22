@@ -1,4 +1,5 @@
 const API_URL = process.env.API_URL;
+const { openInvalidateSessionModal } = require('../modals/invalidateSessionModal');
 
 /**
  * Login Page - Template and Handlers
@@ -8,6 +9,8 @@ function getLoginPageTemplate() {
 
     return `
         <div class="login-page">
+            <div id="modal-container"></div>
+            
             <div class="login-container">
                 <div class="login-header">
                     <h1>Fotoyu Bot Uploader</h1>
@@ -44,6 +47,12 @@ function getLoginPageTemplate() {
                     <button type="submit" class="ant-btn ant-btn-primary">
                         Login
                     </button>
+                    
+                <div style="margin-top: 16px;">
+                    <button class="profile-btn" id="invalidate-session-btn" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3); display: flex; align-items: center; gap: 6px; border-radius: 8px; font-weight: 600; font-size: 13px; padding: 10px 16px; transition: all 0.2s ease; width: 100%; justify-content: center; border: none; cursor: pointer; color: white;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(245, 158, 11, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(245, 158, 11, 0.3)'">
+                        <span>Force Logout Device</span>
+                    </button>
+                </div>
                 </form>
 
                 <div id="error-message" class="error-message"></div>
@@ -68,6 +77,14 @@ function initLoginPage(router) {
     const togglePasswordBtn = document.getElementById('toggle-login-password');
     const errorMessage = document.getElementById('error-message');
     const loginContainer = document.querySelector('.login-container');
+    const invalidateSessionBtn = document.getElementById('invalidate-session-btn');
+
+    // Invalidate Session button handler
+    if (invalidateSessionBtn) {
+        invalidateSessionBtn.addEventListener('click', () => {
+            openInvalidateSessionModal();
+        });
+    }
 
     // Password visibility toggle
     if (togglePasswordBtn) {

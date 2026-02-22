@@ -319,10 +319,7 @@ module.exports = [
     },
     {
         method: 'POST',
-        path: '/api/admin/customers/{username}/invalidate-session',
-        options: {
-            pre: [{ method: authMiddleware }],
-        },
+        path: '/api/customers/{username}/invalidate-session',
         handler: preHandler(invalidateCustomerSession),
     },
 ];

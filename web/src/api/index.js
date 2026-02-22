@@ -46,7 +46,7 @@ export const customerAPI = {
     delete: (id) => api.delete(`/customers/${id}`),
     updateSubscription: (id, subscriptionExpiredAt) =>
         api.patch(`/customers/${id}/subscription`, { subscriptionExpiredAt }),
-    invalidateSession: (username) => api.post(`/admin/customers/${username}/invalidate-session`),
+    invalidateSession: (username) => api.post(`/customers/${username}/invalidate-session`),
 };
 
 export default api;
