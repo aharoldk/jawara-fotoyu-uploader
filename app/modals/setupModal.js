@@ -1,108 +1,200 @@
 /**
- * Setup Modal (Playwright Installation Guide) - Template and Handlers
+ * Setup & Help Modal - Combined Installation Guide and User Help
  */
-
-// ============================================================================
-// TEMPLATE
-// ============================================================================
-
 function getSetupModalTemplate() {
     return `
         <div id="playwright-info-modal" class="modal" style="display: none;">
-            <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
                 <div class="modal-header">
-                    <h2>🎭 Playwright Setup Guide</h2>
+                    <h2 style="display: flex; align-items: center; gap: 10px; margin: 0;">
+                        <span>🎭</span>
+                        <span>Setup & Help Guide</span>
+                    </h2>
                     <button class="modal-close" id="close-playwright-modal">&times;</button>
                 </div>
                 <div class="modal-body">
                     
-                    <!-- Step 1: Check Prerequisites -->
-                    <div class="form-group">
-                        <label style="font-size: 16px; font-weight: 600; color: #2d3748; margin-bottom: 8px;">Step 1: Check if Node.js & NPX are installed</label>
-                        <p style="color: #718096; font-size: 14px; margin-bottom: 12px;">Open Terminal (macOS) or Command Prompt (Windows) and run:</p>
-                        <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative; margin-bottom: 8px;">
-                            node --version && npx --version
-                            <button onclick="copyCode(this, 'node --version && npx --version')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
-                        </div>
-                        <p style="color: #718096; font-size: 13px;">
-                            ✅ If you see version numbers → Skip to Step 3<br>
-                            ❌ If "command not found" → Continue to Step 2
-                        </p>
+                    <!-- Tabs -->
+                    <div style="display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0;">
+                        <button class="tab-btn active" data-tab="help" style="padding: 12px 24px; background: none; border: none; cursor: pointer; font-size: 15px; font-weight: 600; color: #718096; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s;">
+                            📚 How to Use
+                        </button>
+                        <button class="tab-btn" data-tab="setup" style="padding: 12px 24px; background: none; border: none; cursor: pointer; font-size: 15px; font-weight: 600; color: #718096; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s;">
+                            🎭 Playwright Setup
+                        </button>
                     </div>
 
-                    <!-- Step 2: Install Node.js -->
-                    <div class="form-group">
-                        <label style="font-size: 16px; font-weight: 600; color: #2d3748; margin-bottom: 8px;">Step 2: Install Node.js (if needed)</label>
-                        
-                        <div style="margin-bottom: 16px;">
-                            <p style="font-weight: 600; color: #2d3748; margin-bottom: 8px;">🍎 macOS:</p>
-                            <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">Option A: Using Homebrew</p>
-                            <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative; margin-bottom: 12px;">
-                                brew install node
-                                <button onclick="copyCode(this, 'brew install node')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
-                            </div>
-                            <p style="color: #718096; font-size: 14px;">Option B: Download from <a href="https://nodejs.org" target="_blank" style="color: #4299e1;">nodejs.org</a></p>
-                        </div>
-
-                        <div style="margin-bottom: 16px;">
-                            <p style="font-weight: 600; color: #2d3748; margin-bottom: 8px;">🪟 Windows:</p>
-                            <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">Option A: Download from <a href="https://nodejs.org" target="_blank" style="color: #4299e1;">nodejs.org</a> (Recommended)</p>
-                            <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">Option B: Using Chocolatey</p>
-                            <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative;">
-                                choco install nodejs
-                                <button onclick="copyCode(this, 'choco install nodejs')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
-                            </div>
-                            <p style="color: #e53e3e; font-size: 13px; margin-top: 8px;">⚠️ After installation, restart Terminal/Command Prompt!</p>
-                        </div>
+                    <!-- Help Tab Content -->
+                    <div id="help-tab" class="tab-content" style="display: block;">
+                        ${getHelpContent()}
                     </div>
 
-                    <!-- Step 3: Install Playwright -->
-                    <div class="form-group">
-                        <label style="font-size: 16px; font-weight: 600; color: #2d3748; margin-bottom: 8px;">Step 3: Install Playwright Browsers</label>
-                        
-                        <div style="margin-bottom: 16px;">
-                            <p style="font-weight: 600; color: #2d3748; margin-bottom: 8px;">🍎 macOS:</p>
-                            <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">1. Navigate to app directory:</p>
-                            <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative; margin-bottom: 12px;">
-                                cd /Applications/Fotoyu\\ Bot\\ Uploader.app/Contents/Resources/app
-                                <button onclick="copyCode(this, 'cd /Applications/Fotoyu\\\\ Bot\\\\ Uploader.app/Contents/Resources/app')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
-                            </div>
-                            <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">2. Install Playwright:</p>
-                            <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative;">
-                                npx playwright install chromium
-                                <button onclick="copyCode(this, 'npx playwright install chromium')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
-                            </div>
-                        </div>
-
-                        <div style="margin-bottom: 16px;">
-                            <p style="font-weight: 600; color: #2d3748; margin-bottom: 8px;">🪟 Windows:</p>
-                            <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">1. Open Command Prompt as Administrator</p>
-                            <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">2. Navigate to app directory:</p>
-                            <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative; margin-bottom: 12px;">
-                                cd "%LOCALAPPDATA%\\Programs\\fotoyu-bot-uploader\\resources\\app"
-                                <button onclick="copyCode(this, 'cd \"%LOCALAPPDATA%\\\\Programs\\\\fotoyu-bot-uploader\\\\resources\\\\app\"')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
-                            </div>
-                            <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">3. Install Playwright:</p>
-                            <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative;">
-                                npx playwright install chromium
-                                <button onclick="copyCode(this, 'npx playwright install chromium')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
-                            </div>
-                        </div>
-
-                        <p style="color: #718096; font-size: 14px; margin-top: 12px;">
-                            ⏱️ Wait 2-5 minutes for download (~150MB)<br>
-                            🔄 Restart the app after installation
-                        </p>
-                    </div>
-
-                    <div style="background: #fef5e7; border-left: 4px solid #f39c12; padding: 12px; border-radius: 4px; margin-top: 16px;">
-                        <p style="color: #795548; font-size: 13px; margin: 0;">
-                            <strong>💡 Tip:</strong> You only need to install once. If you see browser errors later, run the install command again.
-                        </p>
+                    <!-- Setup Tab Content -->
+                    <div id="setup-tab" class="tab-content" style="display: none;">
+                        ${getSetupContent()}
                     </div>
 
                 </div>
             </div>
+        </div>
+    `;
+}
+
+function getHelpContent() {
+    return `
+        <!-- Quick Start -->
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 8px; margin-bottom: 24px; color: white;">
+            <h3 style="margin: 0 0 12px 0; font-size: 18px;">⚡ Quick Start</h3>
+            <ol style="margin: 0; padding-left: 20px; line-height: 1.8;">
+                <li><strong>First Time?</strong> Click the <span style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px;">🎭 Playwright Setup</span> tab above to install browser automation</li>
+                <li>Enter your <strong>Fotoyu password</strong> (required for auto-login)</li>
+                <li><strong>Select folder</strong> containing your photos/videos</li>
+                <li>Fill in <strong>Price</strong> and <strong>FotoTree</strong> (required fields)</li>
+                <li>Click <strong>Start Upload</strong> and let the bot do the work!</li>
+            </ol>
+        </div>
+
+        <!-- Field Explanations -->
+        <div style="margin-bottom: 24px;">
+            <h3 style="color: #2d3748; margin-bottom: 16px; font-size: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
+                📝 Field Explanations
+            </h3>
+            
+            <div style="display: grid; gap: 12px;">
+                <div style="background: #f7fafc; padding: 14px; border-radius: 6px; border-left: 3px solid #e53e3e;">
+                    <div style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 14px;">🔐 Password Fotoyu <span style="background: #e53e3e; color: white; padding: 1px 6px; border-radius: 3px; font-size: 10px; margin-left: 6px;">REQUIRED</span></div>
+                    <div style="color: #4a5568; font-size: 13px; line-height: 1.5;">Your Fotoyu account password. The bot uses this to login automatically. <strong>Note:</strong> Password is NOT stored.</div>
+                </div>
+
+                <div style="background: #f7fafc; padding: 14px; border-radius: 6px; border-left: 3px solid #4299e1;">
+                    <div style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 14px;">📁 Select Folder</div>
+                    <div style="color: #4a5568; font-size: 13px; line-height: 1.5;">Choose the folder containing your photos or videos to upload.</div>
+                </div>
+
+                <div style="background: #f7fafc; padding: 14px; border-radius: 6px; border-left: 3px solid #48bb78;">
+                    <div style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 14px;">⚡ Concurrent Tabs (1-10)</div>
+                    <div style="color: #4a5568; font-size: 13px; line-height: 1.5;">Number of browser tabs for parallel uploads. <strong>Tip:</strong> Start with 1-2 tabs.</div>
+                </div>
+
+                <div style="background: #f7fafc; padding: 14px; border-radius: 6px; border-left: 3px solid #ed8936;">
+                    <div style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 14px;">📦 Batch Size (10-2000)</div>
+                    <div style="color: #4a5568; font-size: 13px; line-height: 1.5;"><strong>Recommended:</strong> 10-50 for photos, 5-10 for videos.</div>
+                </div>
+
+                <div style="background: #f7fafc; padding: 14px; border-radius: 6px; border-left: 3px solid #e53e3e;">
+                    <div style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 14px;">🌲 FotoTree <span style="background: #e53e3e; color: white; padding: 1px 6px; border-radius: 3px; font-size: 10px; margin-left: 6px;">REQUIRED</span></div>
+                    <div style="color: #4a5568; font-size: 13px; line-height: 1.5;">Type at least 3 characters to search, then <strong>click on a result</strong> to select it.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tips -->
+        <div style="margin-bottom: 16px;">
+            <h3 style="color: #2d3748; margin-bottom: 16px; font-size: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">💡 Tips & Best Practices</h3>
+            
+            <div style="display: grid; gap: 10px;">
+                <div style="background: #edf2f7; padding: 12px; border-radius: 6px; border-left: 3px solid #48bb78;">
+                    <div style="color: #2d3748; font-size: 13px;"><strong>✓ For Photos:</strong> Use batch size 10-50 and 2-3 concurrent tabs for optimal speed</div>
+                </div>
+                <div style="background: #edf2f7; padding: 12px; border-radius: 6px; border-left: 3px solid #48bb78;">
+                    <div style="color: #2d3748; font-size: 13px;"><strong>✓ For Videos:</strong> Use batch size 5-10 and 1-2 concurrent tabs</div>
+                </div>
+                <div style="background: #edf2f7; padding: 12px; border-radius: 6px; border-left: 3px solid #48bb78;">
+                    <div style="color: #2d3748; font-size: 13px;"><strong>✓ Save Settings:</strong> Use <strong>Profile</strong> button to save your common settings</div>
+                </div>
+                <div style="background: #fff3cd; padding: 12px; border-radius: 6px; border-left: 3px solid #ed8936;">
+                    <div style="color: #2d3748; font-size: 13px;"><strong>⚠️ Performance:</strong> More tabs = faster but more CPU/memory usage</div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function getSetupContent() {
+    return `
+        <!-- Step 1: Check Prerequisites -->
+        <div class="form-group">
+            <label style="font-size: 16px; font-weight: 600; color: #2d3748; margin-bottom: 8px;">Step 1: Check if Node.js & NPX are installed</label>
+            <p style="color: #718096; font-size: 14px; margin-bottom: 12px;">Open Terminal (macOS) or Command Prompt (Windows) and run:</p>
+            <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative; margin-bottom: 8px;">
+                node --version && npx --version
+                <button onclick="copyCode(this, 'node --version && npx --version')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
+            </div>
+            <p style="color: #718096; font-size: 13px;">
+                ✅ If you see version numbers → Skip to Step 3<br>
+                ❌ If "command not found" → Continue to Step 2
+            </p>
+        </div>
+
+        <!-- Step 2: Install Node.js -->
+        <div class="form-group">
+            <label style="font-size: 16px; font-weight: 600; color: #2d3748; margin-bottom: 8px;">Step 2: Install Node.js (if needed)</label>
+
+            <div style="margin-bottom: 16px;">
+                <p style="font-weight: 600; color: #2d3748; margin-bottom: 8px;">🍎 macOS:</p>
+                <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">Option A: Using Homebrew</p>
+                <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative; margin-bottom: 12px;">
+                    brew install node
+                    <button onclick="copyCode(this, 'brew install node')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
+                </div>
+                <p style="color: #718096; font-size: 14px;">Option B: Download from <a href="https://nodejs.org" target="_blank" style="color: #4299e1;">nodejs.org</a></p>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <p style="font-weight: 600; color: #2d3748; margin-bottom: 8px;">🪟 Windows:</p>
+                <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">Option A: Download from <a href="https://nodejs.org" target="_blank" style="color: #4299e1;">nodejs.org</a> (Recommended)</p>
+                <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">Option B: Using Chocolatey</p>
+                <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative;">
+                    choco install nodejs
+                    <button onclick="copyCode(this, 'choco install nodejs')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
+                </div>
+                <p style="color: #e53e3e; font-size: 13px; margin-top: 8px;">⚠️ After installation, restart Terminal/Command Prompt!</p>
+            </div>
+        </div>
+
+        <!-- Step 3: Install Playwright -->
+        <div class="form-group">
+            <label style="font-size: 16px; font-weight: 600; color: #2d3748; margin-bottom: 8px;">Step 3: Install Playwright Browsers</label>
+
+            <div style="margin-bottom: 16px;">
+                <p style="font-weight: 600; color: #2d3748; margin-bottom: 8px;">🍎 macOS:</p>
+                <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">1. Navigate to app directory:</p>
+                <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative; margin-bottom: 12px;">
+                    cd /Applications/Fotoyu\\ Bot\\ Uploader.app/Contents/Resources/app
+                    <button onclick="copyCode(this, 'cd /Applications/Fotoyu\\\\ Bot\\\\ Uploader.app/Contents/Resources/app')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
+                </div>
+                <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">2. Install Playwright:</p>
+                <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative;">
+                    npx playwright install chromium
+                    <button onclick="copyCode(this, 'npx playwright install chromium')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <p style="font-weight: 600; color: #2d3748; margin-bottom: 8px;">🪟 Windows:</p>
+                <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">1. Open Command Prompt as Administrator</p>
+                <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">2. Navigate to app directory:</p>
+                <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative; margin-bottom: 12px;">
+                    cd "%LOCALAPPDATA%\\Programs\\fotoyu-bot-uploader\\resources\\app"
+                    <button onclick="copyCode(this, 'cd \"%LOCALAPPDATA%\\\\Programs\\\\fotoyu-bot-uploader\\\\resources\\\\app\"')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
+                </div>
+                <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">3. Install Playwright:</p>
+                <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative;">
+                    npx playwright install chromium
+                    <button onclick="copyCode(this, 'npx playwright install chromium')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
+                </div>
+            </div>
+
+            <p style="color: #718096; font-size: 14px; margin-top: 12px;">
+                ⏱️ Wait 2-5 minutes for download (~150MB)<br>
+                🔄 Restart the app after installation
+            </p>
+        </div>
+
+        <div style="background: #fef5e7; border-left: 4px solid #f39c12; padding: 12px; border-radius: 4px; margin-top: 16px;">
+            <p style="color: #795548; font-size: 13px; margin: 0;">
+                <strong>💡 Tip:</strong> You only need to install once. If you see browser errors later, run the install command again.
+            </p>
         </div>
     `;
 }
@@ -116,6 +208,39 @@ function openSetupModal() {
     const closeBtn = document.getElementById('close-playwright-modal');
 
     modal.style.display = 'flex';
+
+    // Setup tab switching
+    const tabButtons = modal.querySelectorAll('.tab-btn');
+    const tabContents = modal.querySelectorAll('.tab-content');
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const tabName = button.getAttribute('data-tab');
+            
+            // Update active tab button
+            tabButtons.forEach(btn => {
+                btn.classList.remove('active');
+                btn.style.color = '#718096';
+                btn.style.borderBottomColor = 'transparent';
+            });
+            button.classList.add('active');
+            button.style.color = '#667eea';
+            button.style.borderBottomColor = '#667eea';
+
+            // Show active tab content
+            tabContents.forEach(content => {
+                content.style.display = 'none';
+            });
+            document.getElementById(`${tabName}-tab`).style.display = 'block';
+        });
+    });
+
+    // Set initial active tab style
+    const activeTab = modal.querySelector('.tab-btn.active');
+    if (activeTab) {
+        activeTab.style.color = '#667eea';
+        activeTab.style.borderBottomColor = '#667eea';
+    }
 
     // Close modal handler
     const closeModal = () => {
@@ -131,10 +256,6 @@ function openSetupModal() {
         }
     };
 }
-
-// ============================================================================
-// EXPORTS
-// ============================================================================
 
 module.exports = {
     getSetupModalTemplate,

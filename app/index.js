@@ -16,10 +16,6 @@ const { getSetupModalTemplate, openSetupModal } = require('./modals/setupModal')
 
 const API_URL = process.env.API_URL;
 
-// ============================================================================
-// GLOBAL UTILITIES
-// ============================================================================
-
 /**
  * Copy text to clipboard with visual feedback
  */
@@ -39,12 +35,7 @@ function copyCode(button, text) {
     });
 }
 
-// Make copyCode global for onclick handlers in HTML
 window.copyCode = copyCode;
-
-// ============================================================================
-// ROUTER
-// ============================================================================
 
 const router = {
     currentRoute: '',
@@ -158,10 +149,6 @@ const router = {
     }
 };
 
-// ============================================================================
-// APPLICATION BOOTSTRAP
-// ============================================================================
-
 document.addEventListener('DOMContentLoaded', () => {
     router.init();
 });
@@ -169,10 +156,6 @@ document.addEventListener('DOMContentLoaded', () => {
 window.addEventListener('beforeunload', () => {
     router.cleanup();
 });
-
-// ============================================================================
-// EXPORTS (for testing)
-// ============================================================================
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = router;
