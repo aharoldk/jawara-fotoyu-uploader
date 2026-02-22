@@ -111,7 +111,7 @@ async function launchBrowser(log) {
 
     log('Browser launched successfully');
 
-    return { context, page };
+    return { browser, context, page };
 }
 
 // ============================================================================
@@ -224,7 +224,7 @@ async function triggerFileChooser(page, contentType, log) {
 /**
  * Upload files batch
  */
-async function uploadFilesBatch(page, batch, contentType, log) {
+async function uploadFilesBatch(page, batch, contentType, log, isCancelled) {
     const fileChooserPromise = page.waitForEvent('filechooser', {timeout: 30000});
 
     await triggerFileChooser(page, contentType, log);
@@ -232,10 +232,42 @@ async function uploadFilesBatch(page, batch, contentType, log) {
     log(`Waiting for file chooser...`);
     const fileChooser = await fileChooserPromise;
 
+    // Check cancellation before selecting files
+    if (isCancelled && isCancelled()) {
+        log('Upload cancelled during file selection', 'warning');
+        throw new Error('Upload cancelled by user');
+    }
+
     log(`Selecting ${batch.length} files...`);
     await fileChooser.setFiles(batch);
 
     log(`Files selected, waiting for compression to complete...`);
+
+    // Wait with cancellation checks during compression
+    // Files typically take 1-5 seconds to compress depending on size
+    const maxWaitTime = 30000; // 30 seconds max
+    const checkInterval = 500; // Check every 500ms
+    let waited = 0;
+
+    while (waited < maxWaitTime) {
+        if (isCancelled && isCancelled()) {
+            log('Upload cancelled during file compression', 'warning');
+            throw new Error('Upload cancelled by user');
+        }
+        await page.waitForTimeout(checkInterval);
+        waited += checkInterval;
+
+        // Try to detect if compression is complete by checking for upload form elements
+        try {
+            const hasForm = await page.locator('input[name="price"], textarea[name="description"]').count() > 0;
+            if (hasForm) {
+                log('File compression completed');
+                break;
+            }
+        } catch (e) {
+            // Continue waiting
+        }
+    }
 }
 
 // ============================================================================
@@ -367,13 +399,19 @@ async function closeWarningModal(page, log) {
 /**
  * Fill all metadata fields
  */
-async function fillMetadata(page, metadata, log) {
+async function fillMetadata(page, metadata, log, isCancelled) {
     log('Waiting for metadata form to be ready...');
+
+    // Check cancellation before starting
+    if (isCancelled && isCancelled()) {
+        log('Upload cancelled before filling metadata', 'warning');
+        throw new Error('Upload cancelled by user');
+    }
 
     try {
         await page.waitForSelector(
             'input[name="price"], textarea[placeholder*="Ceritakan tentang konten kamu"], input[placeholder*="FotoTree"]',
-            { state: 'visible', timeout: 0 }
+            { state: 'visible', timeout: 15000 }
         );
         log('Metadata form detected and visible!');
     } catch (error) {
@@ -390,10 +428,34 @@ async function fillMetadata(page, metadata, log) {
         }
     }
 
+    // Check cancellation after waiting for form
+    if (isCancelled && isCancelled()) {
+        log('Upload cancelled while waiting for metadata form', 'warning');
+        throw new Error('Upload cancelled by user');
+    }
+
     await closeWarningModal(page, log);
 
+    // Check cancellation before each field
+    if (isCancelled && isCancelled()) {
+        log('Upload cancelled during metadata filling', 'warning');
+        throw new Error('Upload cancelled by user');
+    }
+
     await fillPrice(page, metadata.harga, log);
+
+    if (isCancelled && isCancelled()) {
+        log('Upload cancelled during metadata filling', 'warning');
+        throw new Error('Upload cancelled by user');
+    }
+
     await fillDescription(page, metadata.deskripsi, log);
+
+    if (isCancelled && isCancelled()) {
+        log('Upload cancelled during metadata filling', 'warning');
+        throw new Error('Upload cancelled by user');
+    }
+
     await fillFotoTree(page, metadata.fototree, log);
 
     log('Metadata filled successfully');
@@ -467,9 +529,15 @@ async function handleDuplicateModal(page, log) {
 /**
  * Click the publish/upload button and wait for completion
  */
-async function publishUpload(page, log) {
+async function publishUpload(page, log, isCancelled) {
     log('Looking for Unggah button to publish...');
     await page.waitForTimeout(1000);
+
+    // Check cancellation before publishing
+    if (isCancelled && isCancelled()) {
+        log('Upload cancelled before publishing', 'warning');
+        throw new Error('Upload cancelled by user');
+    }
 
     try {
         const unggahButton = page.locator(
@@ -485,18 +553,43 @@ async function publishUpload(page, log) {
             log('Waiting for upload to complete...');
 
             // Wait for result modal to appear (success or duplicate)
-            try {
-                await page.waitForSelector(
-                    'p:has-text("Diunggah! Tetapi"), ' +
-                    'p:has-text("konten terdeteksi sebagai duplikat"), ' +
-                    'p:has-text("berhasil"), ' +
-                    'p:has-text("selesai"), ' +
-                    'p:has-text("Diunggah")',
-                    { state: 'visible', timeout: 0 }
-                );
+            // Use polling with cancellation checks
+            const maxWaitTime = 60000; // 60 seconds max for upload
+            const checkInterval = 1000; // Check every second
+            let waited = 0;
+            let completed = false;
+
+            while (waited < maxWaitTime) {
+                if (isCancelled && isCancelled()) {
+                    log('Upload cancelled during upload processing', 'warning');
+                    throw new Error('Upload cancelled by user');
+                }
+
+                try {
+                    const resultSelector = await page.locator(
+                        'p:has-text("Diunggah! Tetapi"), ' +
+                        'p:has-text("konten terdeteksi sebagai duplikat"), ' +
+                        'p:has-text("berhasil"), ' +
+                        'p:has-text("selesai"), ' +
+                        'p:has-text("Diunggah")'
+                    ).count();
+
+                    if (resultSelector > 0) {
+                        completed = true;
+                        break;
+                    }
+                } catch (e) {
+                    // Continue waiting
+                }
+
+                await page.waitForTimeout(checkInterval);
+                waited += checkInterval;
+            }
+
+            if (!completed) {
+                log('Upload completion modal not detected, but continuing...', 'warning');
+            } else {
                 log('Upload process completed');
-            } catch (error) {
-                log('Completion modal not detected, but continuing...', 'warning');
             }
 
             // Additional wait for UI to stabilize
@@ -507,6 +600,10 @@ async function publishUpload(page, log) {
             log('Unggah button not found - upload may be processing automatically', 'warning');
         }
     } catch (uploadError) {
+        // Check if error is due to cancellation
+        if (uploadError.message && uploadError.message.includes('cancelled by user')) {
+            throw uploadError;
+        }
         log(`Error clicking Unggah button: ${uploadError.message}`, 'error');
         throw uploadError;
     }
@@ -538,7 +635,7 @@ async function processSingleBatch(page, batch, batchNumber, totalBatches, params
 
     // Step 2: Choose Files
     log(`[Batch ${batchNumber}] Step 2: Selecting ${batch.length} files...`);
-    await uploadFilesBatch(page, batch, contentType, log);
+    await uploadFilesBatch(page, batch, contentType, log, isCancelled);
 
     if (isCancelled && isCancelled()) {
         log(`[Batch ${batchNumber}] Upload cancelled by user`, 'warning');
@@ -547,7 +644,7 @@ async function processSingleBatch(page, batch, batchNumber, totalBatches, params
 
     // Step 3: Fill Metadata (FotoTree, Price, Description)
     log(`[Batch ${batchNumber}] Step 3: Filling metadata...`);
-    await fillMetadata(page, metadata, log);
+    await fillMetadata(page, metadata, log, isCancelled);
 
     if (isCancelled && isCancelled()) {
         log(`[Batch ${batchNumber}] Upload cancelled by user`, 'warning');
@@ -556,7 +653,7 @@ async function processSingleBatch(page, batch, batchNumber, totalBatches, params
 
     // Step 4: Publish/Upload
     log(`[Batch ${batchNumber}] Step 4: Publishing upload...`);
-    await publishUpload(page, log);
+    await publishUpload(page, log, isCancelled);
 
     if (isCancelled && isCancelled()) {
         log(`[Batch ${batchNumber}] Upload cancelled by user`, 'warning');
@@ -743,10 +840,14 @@ async function runMultiTabUpload(context, params, log, isCancelled) {
 // ============================================================================
 async function runBot(params, mainWindow, isCancelled) {
     const log = createLogger(mainWindow);
+    let browser = null;
+    let context = null;
 
     try {
         // Launch browser
-        const { context } = await launchBrowser(log);
+        const launchResult = await launchBrowser(log);
+        browser = launchResult.browser;
+        context = launchResult.context;
 
         // Determine number of concurrent tabs (default to 1 for backward compatibility)
         const concurrentTabs = params.concurrentTabs || 1;
@@ -757,16 +858,18 @@ async function runBot(params, mainWindow, isCancelled) {
 
         // Check if upload was cancelled
         if (isCancelled && isCancelled()) {
-            log('Upload was cancelled by user', 'warning');
+            log('Upload was cancelled by user - closing browser...', 'warning');
+            await cleanupBrowser(browser, context, log);
             return { success: false, cancelled: true, totalFiles };
         }
 
+        log('All uploads completed successfully', 'success');
         return { success: true, totalFiles };
 
     } catch (error) {
-        // Check if error is due to cancellation
         if (error.message && error.message.includes('cancelled by user')) {
-            log('Upload cancelled by user', 'warning');
+            log('Upload cancelled by user - closing browser...', 'warning');
+            await cleanupBrowser(browser, context, log);
             return { success: false, cancelled: true };
         }
 
@@ -774,7 +877,32 @@ async function runBot(params, mainWindow, isCancelled) {
         log(`Error: ${error.message}`, 'error');
         return { success: false, error: error.message };
     } finally {
-        log('Bot execution completed - browser will remain open');
+        // Note: Browser is only closed on cancellation or error
+        // On successful completion, browser stays open for user to review
+        if (isCancelled && isCancelled()) {
+            await cleanupBrowser(browser, context, log);
+        } else {
+            log('Bot execution completed - browser will remain open for review');
+        }
+    }
+}
+
+/**
+ * Cleanup browser resources
+ */
+async function cleanupBrowser(browser, context, log) {
+    try {
+        if (context) {
+            log('Closing browser context...');
+            await context.close();
+        }
+        if (browser) {
+            log('Closing browser...');
+            await browser.close();
+            log('Browser closed successfully');
+        }
+    } catch (error) {
+        log(`Error during cleanup: ${error.message}`, 'warning');
     }
 }
 

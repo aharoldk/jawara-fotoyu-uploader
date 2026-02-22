@@ -229,6 +229,10 @@ async function startUpload(router) {
     startBtn.style.display = 'none';
     stopBtn.style.display = 'block';
     stopBtn.disabled = false;
+    stopBtn.style.opacity = '1';
+
+    // Reset cancellation flag
+    dashboardState.uploadCancelled = false;
 
     try {
         const { ipcRenderer } = require('electron');
@@ -245,25 +249,27 @@ async function startUpload(router) {
             concurrentTabs: concurrentTabs
         });
 
-        if (dashboardState.uploadCancelled) {
-            logMessage('Upload was cancelled by user', 'warning');
-        } else if (result.cancelled) {
-            logMessage('Upload was stopped by user', 'warning');
+        if (dashboardState.uploadCancelled || result.cancelled) {
+            logMessage('✓ Upload stopped successfully - browser closed', 'warning');
         } else if (result.success) {
-            logMessage(`Upload completed successfully! Total: ${result.totalFiles} files`, 'success');
+            logMessage(`✓ Upload completed successfully! Total: ${result.totalFiles} files`, 'success');
         } else {
-            logMessage(`Upload failed: ${result.error}`, 'error');
+            logMessage(`✗ Upload failed: ${result.error}`, 'error');
         }
 
     } catch (error) {
         console.error('Upload error:', error);
-        logMessage(`Upload failed: ${error.message}`, 'error');
+        logMessage(`✗ Upload failed: ${error.message}`, 'error');
     } finally {
+        // Reset UI
+        dashboardState.uploadCancelled = false;
         startBtn.disabled = false;
         startBtn.textContent = 'Start Upload';
         startBtn.style.display = 'block';
         stopBtn.style.display = 'none';
         stopBtn.disabled = true;
+        stopBtn.textContent = 'Stop Upload';
+        stopBtn.style.opacity = '1';
     }
 }
 
@@ -273,15 +279,18 @@ function stopUpload() {
     const { ipcRenderer } = require('electron');
     ipcRenderer.send('cancel-upload');
 
-    logMessage('Stopping upload...', 'warning');
+    logMessage('⚠️ Stopping upload... (will stop at next safe checkpoint)', 'warning');
 
     const startBtn = document.getElementById('startBtn');
     const stopBtn = document.getElementById('stopBtn');
 
-    startBtn.disabled = false;
-    startBtn.textContent = 'Start Upload';
-    startBtn.style.display = 'block';
-    stopBtn.style.display = 'none';
+    // Disable stop button to prevent multiple clicks
+    stopBtn.disabled = true;
+    stopBtn.textContent = 'Stopping...';
+    stopBtn.style.opacity = '0.6';
+
+    // Keep start button disabled until upload actually stops
+    startBtn.disabled = true;
 }
 
 // ============================================================================
