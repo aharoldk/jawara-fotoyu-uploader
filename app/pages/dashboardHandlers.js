@@ -4,19 +4,11 @@
 
 const API_URL = process.env.API_URL;
 
-// ============================================================================
-// STATE
-// ============================================================================
-
 const dashboardState = {
     selectedFolder: null,
     searchTimeout: null,
     uploadCancelled: false
 };
-
-// ============================================================================
-// INITIALIZATION
-// ============================================================================
 
 function initDashboardPage(router) {
     dashboardState.selectedFolder = null;
@@ -34,11 +26,8 @@ function initDashboardPage(router) {
     initEventListeners(router);
 }
 
-// ============================================================================
-// EVENT LISTENERS
-// ============================================================================
-
 function initEventListeners(router) {
+
     // Logout
     document.getElementById('logout-btn').addEventListener('click', async () => {
         await logout(router);
@@ -103,10 +92,6 @@ function initEventListeners(router) {
     }
 }
 
-// ============================================================================
-// FOLDER SELECTION
-// ============================================================================
-
 async function selectFolder() {
     try {
         const { ipcRenderer } = require('electron');
@@ -137,10 +122,6 @@ async function selectFolder() {
         logMessage('Error selecting folder', 'error');
     }
 }
-
-// ============================================================================
-// UPLOAD MANAGEMENT
-// ============================================================================
 
 async function startUpload(router) {
     const contentType = document.getElementById('contentType').value;

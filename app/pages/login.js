@@ -1,13 +1,8 @@
+const API_URL = process.env.API_URL;
+
 /**
  * Login Page - Template and Handlers
  */
-
-const API_URL = process.env.API_URL;
-
-// ============================================================================
-// TEMPLATE
-// ============================================================================
-
 function getLoginPageTemplate() {
     const version = require('../package.json').version;
 
@@ -15,8 +10,8 @@ function getLoginPageTemplate() {
         <div class="login-page">
             <div class="login-container">
                 <div class="login-header">
-                    <h1>Fotoyu Bot</h1>
-                    <p>Login to continue</p>
+                    <h1>Fotoyu Bot Uploader</h1>
+                    <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">Login to continue</p>
                 </div>
 
                 <form id="login-form">
@@ -53,19 +48,18 @@ function getLoginPageTemplate() {
 
                 <div id="error-message" class="error-message"></div>
                 
-                <div style="text-align: center; margin-top: 24px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
-                    <p style="color: #a0aec0; font-size: 12px; margin: 0;">
+                <div style="text-align: center; margin-top: 24px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
+                    <p style="color: #718096; font-size: 12px; margin: 0; padding-bottom: 10px;">
                         Version ${version}
+                    </p>
+                    <p style="color: #a0aec0; font-size: 11px; margin: 0;">
+                        © ${new Date().getFullYear()} Jawara Digital Solution. All rights reserved.
                     </p>
                 </div>
             </div>
         </div>
     `;
 }
-
-// ============================================================================
-// HANDLERS
-// ============================================================================
 
 function initLoginPage(router) {
     const form = document.getElementById('login-form');
@@ -134,7 +128,12 @@ function initLoginPage(router) {
 
     function showError(message) {
         if (errorMessage) {
-            errorMessage.textContent = message;
+            errorMessage.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <span style="font-size: 16px;">❌</span>
+                    <span>${message}</span>
+                </div>
+            `;
             errorMessage.classList.add('show');
 
             setTimeout(() => {
@@ -143,10 +142,6 @@ function initLoginPage(router) {
         }
     }
 }
-
-// ============================================================================
-// EXPORTS
-// ============================================================================
 
 module.exports = {
     getLoginPageTemplate,

@@ -26,15 +26,32 @@ function getDashboardPageTemplate() {
 function getHeaderTemplate(customer, version) {
     return `
         <div class="header">
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <h1>Fotoyu Bot Uploader</h1>
-                <span style="background: #e2e8f0; color: #4a5568; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500;">v${version}</span>
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div style="display: flex; flex-direction: column; gap: 2px;">
+                    <h1 style="margin: 0; line-height: 1.2;">Fotoyu Bot Uploader</h1>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; letter-spacing: 0.5px;">VERSION ${version}</span>
+                        <span style="color: #718096; font-size: 11px; font-weight: 500;">•</span>
+                        <span style="color: #4a5568; font-size: 11px; font-weight: 600;">Powered by Jawara Digital Solution</span>
+                    </div>
+                </div>
             </div>
-            <div class="user-info">
-                <span class="user-name">${customer.username || 'User'}</span>
-                <button class="profile-btn" id="playwright-info-btn" style="background: #805ad5; margin-right: 8px;" onmouseover="this.style.background='#6b46c1'" onmouseout="this.style.background='#805ad5'">🎭 Setup</button>
-                <button class="profile-btn" id="profile-btn">Profile</button>
-                <button class="logout-btn" id="logout-btn">Logout</button>
+            
+            <div class="user-info" style="display: flex; align-items: center; gap: 12px;">
+                <button class="profile-btn" id="playwright-info-btn" style="background: linear-gradient(135deg, #805ad5 0%, #6b46c1 100%); color: white; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(128, 90, 213, 0.3); transition: all 0.2s ease; min-width: unset;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(128, 90, 213, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(128, 90, 213, 0.3)'">
+                    <span style="font-size: 16px;">🎭</span>
+                    <span>Setup & Help</span>
+                </button>
+                
+                <button class="profile-btn" id="profile-btn" style="background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); box-shadow: 0 2px 8px rgba(66, 153, 225, 0.3); display: flex; align-items: center; gap: 6px; border-radius: 8px; font-weight: 600; font-size: 13px; padding: 8px 14px; transition: all 0.2s ease; min-width: unset;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(66, 153, 225, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(66, 153, 225, 0.3)'">
+                    <span style="font-size: 16px;">⚙️</span>
+                    <span>Profile</span>
+                </button>
+                
+                <button class="logout-btn" id="logout-btn" style="background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%); box-shadow: 0 2px 8px rgba(229, 62, 62, 0.3); display: flex; align-items: center; gap: 6px; border-radius: 8px; font-weight: 600; font-size: 13px; padding: 8px 14px; transition: all 0.2s ease; min-width: unset;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(229, 62, 62, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(229, 62, 62, 0.3)'">
+                    <span style="font-size: 16px;">🚪</span>
+                    <span>Logout</span>
+                </button>
             </div>
         </div>
     `;
