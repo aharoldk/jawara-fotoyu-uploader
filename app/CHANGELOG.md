@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.3.0](https://github.com/aharoldk/jawara-fotoyu-uploader/compare/v1.2.0...v1.3.0) (2026-02-22)
+
+
+### Features
+
+* enhance setup modal with help and installation tabs for improved user guidance ([6e6c017](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/6e6c0173b36328e8ee7eac57b2fee7fb6b619454))
+* implement upload cancellation checks throughout the upload process ([3871279](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/3871279c24dd489a07d08fb8a4235b1a2601b6a1))
+* integrate @hapi/boom for improved error handling in customer routes and services ([97e5639](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/97e5639ca304483064b5da16973fa436f957a75c))
+* integrate @hapi/boom for improved error handling in customer routes and services ([e33c5fc](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/e33c5fc9ba1f538382c333ca331e3cd008d70736))
+* simplify conflict error message for existing customer sessions ([eb9c3d5](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/eb9c3d5e5465b5351b288bb365f06eb6291c04d6))
+
 ## [1.2.0](https://github.com/aharoldk/jawara-fotoyu-uploader/compare/v1.1.0...v1.2.0) (2026-02-21)
 
 
