@@ -2,11 +2,6 @@
  * Dashboard Page (Upload Page) - Template Only
  * Note: Profile and Setup modals are in separate files
  */
-
-// ============================================================================
-// TEMPLATE
-// ============================================================================
-
 function getDashboardPageTemplate() {
     const customer = JSON.parse(localStorage.getItem('customer') || '{}');
     const version = require('../package.json').version;
@@ -136,10 +131,6 @@ function getUploadFormTemplate(customer) {
         </div>
     `;
 }
-
-// ============================================================================
-// EXPORTS
-// ============================================================================
 
 module.exports = {
     getDashboardPageTemplate,
