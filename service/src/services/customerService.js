@@ -16,15 +16,15 @@ async function loginCustomer(username, password, deviceInfo = null, ipAddress = 
     }
 
     // Check if customer already has an active session
-    const existingSession = await getActiveSession(customer._id);
+    const existingSession = await getActiveSession(customer.username);
     if (existingSession) {
-        throw Boom.conflict('Account already logged in on another device, talk to support if you want to log out from other devices');
+        throw Boom.conflict('Account already logged in on another device');
     }
 
-    const token = sign({ id: customer._id, role: 'customer' });
+    const token = sign({ id: customer._id, username: customer.username, role: 'customer' });
 
-    // Create session
-    await createSession(customer._id, token, deviceInfo, ipAddress);
+    // Create session with username
+    await createSession(customer.username, token, deviceInfo, ipAddress);
 
     // Return token and customer details (exclude password)
     const customerDetails = {

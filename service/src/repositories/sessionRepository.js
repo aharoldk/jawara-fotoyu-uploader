@@ -1,10 +1,10 @@
 const Session = require('../models/session');
 
 // Create a new session and invalidate all other sessions for this customer
-async function createSession(customerId, token, deviceInfo = null, ipAddress = null) {
+async function createSession(username, token, deviceInfo = null, ipAddress = null) {
     // Invalidate all existing sessions for this customer
     await Session.updateMany(
-        { customerId, isActive: true },
+        { username, isActive: true },
         { isActive: false }
     );
 
@@ -12,7 +12,7 @@ async function createSession(customerId, token, deviceInfo = null, ipAddress = n
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
     const session = new Session({
-        customerId,
+        username,
         token,
         deviceInfo,
         ipAddress,
@@ -50,18 +50,18 @@ async function invalidateSession(token) {
     );
 }
 
-// Invalidate all sessions for a customer
-async function invalidateAllSessions(customerId) {
+// Invalidate all sessions for a username
+async function invalidateAllSessions(username) {
     await Session.updateMany(
-        { customerId },
+        { username },
         { isActive: false }
     );
 }
 
-// Get active session for customer
-async function getActiveSession(customerId) {
-    return await Session.findOne({
-        customerId,
+// Get active session for username
+async function getActiveSession(username) {
+    return Session.findOne({
+        username,
         isActive: true,
         expiresAt: { $gt: new Date() },
     });

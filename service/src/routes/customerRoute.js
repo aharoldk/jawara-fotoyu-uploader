@@ -176,10 +176,11 @@ async function updateCustomerSubscription(request, h) {
 }
 
 async function invalidateCustomerSession(request, h) {
-    const { id } = request.params;
+    const { username } = request.params;
     const { invalidateAllSessions } = require('../repositories/sessionRepository');
 
-    await invalidateAllSessions(id);
+    // Invalidate all sessions for this username
+    await invalidateAllSessions(username);
 
     return { message: 'Customer session(s) invalidated successfully' };
 }
@@ -318,7 +319,7 @@ module.exports = [
     },
     {
         method: 'POST',
-        path: '/api/admin/customers/{id}/invalidate-session',
+        path: '/api/admin/customers/{username}/invalidate-session',
         options: {
             pre: [{ method: authMiddleware }],
         },

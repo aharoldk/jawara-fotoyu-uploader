@@ -97,7 +97,7 @@ const CustomersPage = () => {
 
     const handleInvalidateSession = async (id, username) => {
         try {
-            await customerAPI.invalidateSession(id);
+            await customerAPI.invalidateSession(username);
             message.success(`Session invalidated for ${username}. They will be logged out on next action.`);
         } catch (error) {
             message.error('Failed to invalidate session');

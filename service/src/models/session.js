@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 
 const sessionSchema = new mongoose.Schema({
-    customerId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Customer',
+    username: {
+        type: String,
         required: true,
+        index: true,
     },
     token: {
         type: String,
