@@ -2,59 +2,6 @@ const {chromium} = require('playwright');
 const fs = require('fs');
 const path = require('path');
 
-/* ===========================================================================
-   FOTOYU BOT UPLOADER - Automated Upload Bot
-   ===========================================================================
-
-   UPLOAD FLOW (per batch):
-
-   1. LOGIN (one time at start)
-      → Open login page
-      → Fill username & password
-      → Click login button
-      → Wait for successful login
-
-   2. UPLOAD PAGE
-      → Navigate to profile page
-      → Click "Unggah" button
-      → Select content type (Photo/Video)
-      → Reach upload form
-
-   3. CHOOSE FILES
-      → Trigger file chooser
-      → Select batch of files
-      → Wait for files to be ready
-
-   4. FILL METADATA
-      → Fill Price (Harga)
-      → Fill Description (Deskripsi)
-      → Fill FotoTree
-      → Close any warning modals
-
-   5. PUBLISH
-      → Click "Unggah" button
-      → Wait for upload completion
-
-   6. HANDLE RESULT
-      → Check if success or duplicate
-      → If duplicate: Close modal, continue
-      → If success: Close modal, continue
-
-   7. NEXT BATCH (if exists)
-      → Go back to step 2 (Upload Page)
-      → Process next batch
-
-   MULTI-TAB SUPPORT:
-   - Multiple tabs share the same login session
-   - Each tab processes batches from a shared queue
-   - Tabs work concurrently for faster uploads
-
-   =========================================================================== */
-
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-
 /**
  * Send log messages to the renderer process
  */
@@ -87,10 +34,6 @@ function getFilesFromFolder(folderPath, contentType) {
         .map(f => path.join(folderPath, f));
 }
 
-// ============================================================================
-// BROWSER SETUP
-// ============================================================================
-
 /**
  * Launch browser with configured settings
  */
@@ -113,10 +56,6 @@ async function launchBrowser(log) {
 
     return { browser, context, page };
 }
-
-// ============================================================================
-// LOGIN PROCESS
-// ============================================================================
 
 /**
  * Fill username and click Continue button
@@ -154,7 +93,10 @@ async function performLogin(page, params, log) {
 
     log('Opening Fotoyu login page...');
     await page.bringToFront();
-    await page.goto('https://www.fotoyu.com/login', {waitUntil: 'networkidle'});
+    await page.goto('https://www.fotoyu.com/login', {
+        waitUntil: 'domcontentloaded',
+        timeout: 60000
+    });
 
     log('Waiting for login form...');
     await page.waitForSelector('input[type="text"], input[name="username"], input[placeholder*="username"]', {timeout: 10000});
@@ -167,32 +109,38 @@ async function performLogin(page, params, log) {
     log('Login successful!');
 }
 
-// ============================================================================
-// NAVIGATION
-// ============================================================================
-
 /**
  * Navigate to upload page
  */
 async function navigateToUploadPage(page, username, log) {
     log('Navigating to profile page...');
-    await page.goto(`https://www.fotoyu.com/profile/${username}?type=all`);
+
+    try {
+        // Use 'domcontentloaded' instead of 'networkidle' for faster, more reliable loading
+        await page.goto(`https://www.fotoyu.com/profile/${username}?type=all`, {
+            waitUntil: 'domcontentloaded',
+            timeout: 60000 // 60 seconds timeout
+        });
+    } catch (error) {
+        if (error.message.includes('Timeout')) {
+            log('Page load slow, trying to continue anyway...', 'warning');
+            // Page may have loaded enough content, try to continue
+        } else {
+            throw error;
+        }
+    }
 
     log('Waiting for upload button...');
-    await page.waitForSelector('div[label="Unggah"]');
+    await page.waitForSelector('div[label="Unggah"]', {timeout: 30000});
     await page.click('div[label="Unggah"]');
 
     log('Navigating to upload page...');
     await page.waitForSelector('p:has-text("Pilih Tipe Konten")', {timeout: 15000});
     await page.getByText("Unggah kreasimu ke server Fotoyu, agar RoboYu milik Yuser bisa menemukannya.", {exact: true}).click();
 
-    await page.waitForURL('https://www.fotoyu.com/upload');
+    await page.waitForURL('https://www.fotoyu.com/upload', {timeout: 30000});
     log('Upload page loaded successfully');
 }
-
-// ============================================================================
-// FILE UPLOAD
-// ============================================================================
 
 /**
  * Trigger file chooser dialog
@@ -269,10 +217,6 @@ async function uploadFilesBatch(page, batch, contentType, log, isCancelled) {
         }
     }
 }
-
-// ============================================================================
-// METADATA FILLING
-// ============================================================================
 
 /**
  * Fill price field
@@ -752,8 +696,20 @@ async function createConcurrentTabs(context, numTabs, params, log) {
         } else {
             // For subsequent tabs, just navigate to profile page (already logged in via shared context)
             log(`[Tab ${i + 1}] Navigating to profile page (using shared session)...`);
-            await page.goto(`https://www.fotoyu.com/profile/${username}?type=all`, {waitUntil: 'networkidle'});
-            log(`[Tab ${i + 1}] Ready (session active)`);
+            try {
+                await page.goto(`https://www.fotoyu.com/profile/${username}?type=all`, {
+                    waitUntil: 'domcontentloaded',
+                    timeout: 60000
+                });
+                log(`[Tab ${i + 1}] Ready (session active)`);
+            } catch (error) {
+                if (error.message.includes('Timeout')) {
+                    log(`[Tab ${i + 1}] Page load slow but continuing...`, 'warning');
+                    // Continue anyway, page likely has enough content loaded
+                } else {
+                    throw error;
+                }
+            }
         }
 
         tabs.push({
@@ -835,9 +791,6 @@ async function runMultiTabUpload(context, params, log, isCancelled) {
     return stats.filesUploaded;
 }
 
-// ============================================================================
-// MAIN FUNCTION
-// ============================================================================
 async function runBot(params, mainWindow, isCancelled) {
     const log = createLogger(mainWindow);
     let browser = null;
