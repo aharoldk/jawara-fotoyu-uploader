@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.4.0](https://github.com/aharoldk/jawara-fotoyu-uploader/compare/v1.3.0...v1.4.0) (2026-02-22)
+
+
+### Features
+
+* enhance modals with z-index adjustments and add setup instructions for Playwright ([a737d69](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/a737d6967652a6fb1e9ad0cd4f46f98250941a23))
+* refactor session management to use username instead of customerId ([a307ca9](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/a307ca9d35664dbaf6cbcb19f1bbfb9000d1637b))
+* update invalidate session endpoint to remove admin prefix ([9342b29](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/9342b299628a21bb47a3a4a62f3a015b7c877f3f))
+
+
+### Bug Fixes
+
+* improve page loading reliability by switching to 'domcontentloaded' and adding timeout handling ([c14dfc1](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/c14dfc154e085a897c315981f3e84a035a1d1b06))
+* update playwright version to remove caret for consistent installation ([6c4445e](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/6c4445ee7d9dd44aeaeb5e5123595c7d87a4dc7d))
+
 ## [1.3.0](https://github.com/aharoldk/jawara-fotoyu-uploader/compare/v1.2.0...v1.3.0) (2026-02-22)
 
 
