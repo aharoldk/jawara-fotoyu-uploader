@@ -18,7 +18,7 @@ async function loginCustomer(username, password, deviceInfo = null, ipAddress = 
     // Check if customer already has an active session
     const existingSession = await getActiveSession(customer._id);
     if (existingSession) {
-        throw Boom.conflict('An active session already exists. Please logout from the other device first or Please talk with the administrator to terminate the existing session.');
+        throw Boom.conflict('Account already logged in on another device, talk to support if you want to log out from other devices');
     }
 
     const token = sign({ id: customer._id, role: 'customer' });
