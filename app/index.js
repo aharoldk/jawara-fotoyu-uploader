@@ -9,8 +9,9 @@
 // ============================================================================
 
 const { getLoginPageTemplate, initLoginPage } = require('./pages/login');
-const { getDashboardPageTemplate } = require('./pages/dashboard');
-const { initDashboardPage, logMessage } = require('./pages/dashboardHandlers');
+const { getDashboardPageTemplate } = require('./pages/uploader');
+const { initDashboardPage, logMessage } = require('./pages/uploadHandlers');
+const { getAutobotPageTemplate, initAutobotPage } = require('./pages/autobot');
 const { getProfileModalTemplate, openProfileModal } = require('./modals/profileModal');
 const { getSetupModalTemplate, openSetupModal } = require('./modals/setupModal');
 
@@ -74,6 +75,34 @@ const router = {
             app.innerHTML = getLoginPageTemplate();
             initLoginPage(this);
 
+        } else if (this.currentRoute === 'autobot') {
+            if (!this.checkAuth()) {
+                this.navigate('login');
+                return;
+            }
+
+            // Check if autobot features are enabled
+            const enableAutobotFeatures = process.env.ENABLE_AUTOBOT_FEATURES === 'true';
+            if (!enableAutobotFeatures) {
+                console.log('Autobot features are disabled. Redirecting to upload page.');
+                this.navigate('upload');
+                return;
+            }
+
+            // Render autobot page
+            app.innerHTML = getAutobotPageTemplate();
+
+            // Inject modals into modal container
+            const modalContainer = document.getElementById('modal-container');
+            if (modalContainer) {
+                modalContainer.innerHTML = getProfileModalTemplate() + getSetupModalTemplate();
+            }
+
+            initAutobotPage(this);
+
+            // Setup modal button handlers for header buttons
+            this.initModalButtons();
+
         } else if (this.currentRoute === 'upload') {
             if (!this.checkAuth()) {
                 this.navigate('login');
@@ -99,7 +128,7 @@ const router = {
 
     initModalButtons() {
         // Profile modal
-        const profileBtn = document.getElementById('profile-btn');
+        const profileBtn = document.getElementById('profile-modal-btn');
         if (profileBtn) {
             profileBtn.addEventListener('click', () => {
                 openProfileModal(this);
@@ -107,7 +136,7 @@ const router = {
         }
 
         // Setup/Playwright modal
-        const playwrightInfoBtn = document.getElementById('playwright-info-btn');
+        const playwrightInfoBtn = document.getElementById('setup-modal-btn');
         if (playwrightInfoBtn) {
             playwrightInfoBtn.addEventListener('click', () => {
                 openSetupModal();

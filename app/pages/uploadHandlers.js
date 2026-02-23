@@ -3,6 +3,7 @@
  */
 
 const API_URL = process.env.API_URL;
+const { initSharedHeader } = require('../components/sharedHeader');
 
 const dashboardState = {
     selectedFolder: null,
@@ -22,16 +23,15 @@ function initDashboardPage(router) {
         logMessage(message, type);
     });
 
+    // Initialize shared header navigation
+    initSharedHeader(router);
+
     // Initialize all event listeners
     initEventListeners(router);
 }
 
 function initEventListeners(router) {
 
-    // Logout
-    document.getElementById('logout-btn').addEventListener('click', async () => {
-        await logout(router);
-    });
 
     // Password toggle
     const togglePasswordBtn = document.getElementById('toggle-password');
@@ -91,6 +91,7 @@ function initEventListeners(router) {
         });
     }
 }
+
 
 async function selectFolder() {
     try {
