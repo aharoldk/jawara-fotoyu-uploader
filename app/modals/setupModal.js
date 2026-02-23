@@ -123,128 +123,63 @@ function getSetupContent() {
             </p>
         </div>
 
-        <!-- Quick Install for Development -->
         <div style="background: #f0fdf4; border: 2px solid #86efac; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
             <h3 style="margin: 0 0 12px 0; font-size: 16px; color: #166534; display: flex; align-items: center; gap: 8px;">
-                <span>💻</span>
-                <span>Quick Install (Current Setup)</span>
+                <span>🚀</span>
+                <span>Quick Start - Complete Setup (Recommended)</span>
             </h3>
-            <ol style="margin: 0; padding-left: 20px; color: #166534; line-height: 1.8;">
+            <p style="color: #166534; margin-bottom: 12px; font-size: 14px;">
+                <strong>Follow these steps to install Node.js with NVM (curl method):</strong>
+            </p>
+            <ol style="margin: 0 0 12px 0; padding-left: 20px; color: #166534; line-height: 1.8;">
                 <li><strong>Open Terminal</strong> (press Cmd+Space, type "Terminal")</li>
-                <li><strong>Navigate to the project folder:</strong></li>
+                <li><strong>Install NVM (Node Version Manager):</strong></li>
             </ol>
-            <div style="background: #1e293b; color: #f1f5f9; padding: 16px; border-radius: 6px; font-family: monospace; font-size: 14px; position: relative; margin: 12px 0; overflow-x: auto;">
-                cd /Users/harold/personal/fotoyu-bot-uploader/app
-                <button onclick="copyCode(this, 'cd /Users/harold/personal/fotoyu-bot-uploader/app')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">📋 Copy</button>
+            <div style="background: #1e293b; color: #f1f5f9; padding: 16px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative; margin: 12px 0; overflow-x: auto;">
+                curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+                <button onclick="copyCode(this, 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">📋 Copy</button>
             </div>
             <ol start="3" style="margin: 0; padding-left: 20px; color: #166534; line-height: 1.8;">
-                <li><strong>Run the installation command:</strong></li>
+                <li><strong>Close and reopen Terminal</strong>, then install Node.js 20:</li>
+            </ol>
+            <div style="background: #1e293b; color: #f1f5f9; padding: 16px; border-radius: 6px; font-family: monospace; font-size: 14px; position: relative; margin: 12px 0; overflow-x: auto;">
+                nvm install 20
+                <button onclick="copyCode(this, 'nvm install 20')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">📋 Copy</button>
+            </div>
+            <ol start="4" style="margin: 0; padding-left: 20px; color: #166534; line-height: 1.8;">
+                <li><strong>Install Playwright browsers:</strong></li>
             </ol>
             <div style="background: #1e293b; color: #f1f5f9; padding: 16px; border-radius: 6px; font-family: monospace; font-size: 14px; position: relative; margin: 12px 0; overflow-x: auto;">
                 npx playwright@1.57.0 install
                 <button onclick="copyCode(this, 'npx playwright@1.57.0 install')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">📋 Copy</button>
             </div>
-            <ol start="4" style="margin: 0; padding-left: 20px; color: #166534; line-height: 1.8;">
-                <li><strong>Press Enter</strong> and wait 2-5 minutes for download (~150MB)</li>
+            <ol start="5" style="margin: 0; padding-left: 20px; color: #166534; line-height: 1.8;">
+                <li><strong>Wait 2-5 minutes</strong> for download (~150MB)</li>
                 <li><strong>Restart the app</strong> when done</li>
             </ol>
+            <div style="background: #dcfce7; border-left: 4px solid #22c55e; padding: 12px; border-radius: 4px; margin-top: 12px;">
+                <p style="color: #166534; font-size: 13px; margin: 0;">
+                    <strong>✨ Why NVM?</strong> NVM allows you to easily manage Node.js versions and is the recommended approach for developers.
+                </p>
+            </div>
         </div>
 
-        <!-- Alternative: One Command -->
+        <!-- Alternative: If Node.js Already Installed -->
         <div style="background: #eff6ff; border: 2px solid #93c5fd; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
             <h3 style="margin: 0 0 12px 0; font-size: 16px; color: #1e40af; display: flex; align-items: center; gap: 8px;">
                 <span>⚡</span>
-                <span>One-Line Command (Alternative)</span>
+                <span>Already Have Node.js? Just Install Playwright</span>
             </h3>
             <p style="color: #1e40af; margin-bottom: 12px; font-size: 14px;">
-                Copy and paste this single command into Terminal:
+                If Node.js is already installed, just run this command:
             </p>
             <div style="background: #1e293b; color: #f1f5f9; padding: 16px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative; margin: 12px 0; overflow-x: auto;">
-                cd /Users/harold/personal/fotoyu-bot-uploader/app && npx playwright@1.57.0 install
-                <button onclick="copyCode(this, 'cd /Users/harold/personal/fotoyu-bot-uploader/app && npx playwright@1.57.0 install')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">📋 Copy</button>
+                npx playwright@1.57.0 install
+                <button onclick="copyCode(this, 'npx playwright@1.57.0 install')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">📋 Copy</button>
             </div>
-        </div>
-
-        <!-- Step 1: Check Prerequisites -->
-        <div class="form-group">
-            <label style="font-size: 16px; font-weight: 600; color: #2d3748; margin-bottom: 8px;">Step 1: Check if Node.js & NPX are installed</label>
-            <p style="color: #718096; font-size: 14px; margin-bottom: 12px;">Open Terminal (macOS) or Command Prompt (Windows) and run:</p>
-            <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative; margin-bottom: 8px;">
-                node --version && npx --version
-                <button onclick="copyCode(this, 'node --version && npx --version')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
-            </div>
-            <p style="color: #718096; font-size: 13px;">
-                ✅ If you see version numbers → Skip to Step 3<br>
-                ❌ If "command not found" → Continue to Step 2
-            </p>
-        </div>
-
-        <!-- Step 2: Install Node.js -->
-        <div class="form-group">
-            <label style="font-size: 16px; font-weight: 600; color: #2d3748; margin-bottom: 8px;">Step 2: Install Node.js (if needed)</label>
-
-            <div style="margin-bottom: 16px;">
-                <p style="font-weight: 600; color: #2d3748; margin-bottom: 8px;">🍎 macOS:</p>
-                <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">Option A: Using Homebrew</p>
-                <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative; margin-bottom: 12px;">
-                    brew install node
-                    <button onclick="copyCode(this, 'brew install node')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
-                </div>
-                <p style="color: #718096; font-size: 14px;">Option B: Download from <a href="https://nodejs.org" target="_blank" style="color: #4299e1;">nodejs.org</a></p>
-            </div>
-
-            <div style="margin-bottom: 16px;">
-                <p style="font-weight: 600; color: #2d3748; margin-bottom: 8px;">🪟 Windows:</p>
-                <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">Option A: Download from <a href="https://nodejs.org" target="_blank" style="color: #4299e1;">nodejs.org</a> (Recommended)</p>
-                <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">Option B: Using Chocolatey</p>
-                <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative;">
-                    choco install nodejs
-                    <button onclick="copyCode(this, 'choco install nodejs')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
-                </div>
-                <p style="color: #e53e3e; font-size: 13px; margin-top: 8px;">⚠️ After installation, restart Terminal/Command Prompt!</p>
-            </div>
-        </div>
-
-        <!-- Step 3: Install Playwright -->
-        <div class="form-group">
-            <label style="font-size: 16px; font-weight: 600; color: #2d3748; margin-bottom: 8px;">Step 3: Install Playwright Browsers</label>
-
-            <div style="margin-bottom: 16px;">
-                <p style="font-weight: 600; color: #2d3748; margin-bottom: 8px;">🍎 macOS:</p>
-                <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">1. Install Playwright:</p>
-                <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative;">
-                    npx playwright@1.57.0 install
-                    <button onclick="copyCode(this, 'npx playwright@1.57.0 install')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
-                </div>
-            </div>
-
-            <div style="margin-bottom: 16px;">
-                <p style="font-weight: 600; color: #2d3748; margin-bottom: 8px;">🪟 Windows:</p>
-                <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">1. Open Command Prompt as Administrator</p>
-                <p style="color: #718096; font-size: 14px; margin-bottom: 8px;">2. Install Playwright:</p>
-                <div style="background: #2d3748; color: #f7fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; position: relative;">
-                    npx playwright@1.57.0 install
-                    <button onclick="copyCode(this, 'npx playwright@1.57.0 install')" style="position: absolute; right: 8px; top: 8px; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy</button>
-                </div>
-            </div>
-
-            <p style="color: #718096; font-size: 14px; margin-top: 12px;">
-                ⏱️ Wait 2-5 minutes for download (~150MB)<br>
-                🔄 Restart the app after installation
-            </p>
-        </div>
-
-        <div style="background: #fef5e7; border-left: 4px solid #f39c12; padding: 12px; border-radius: 4px; margin-top: 16px;">
-            <p style="color: #795548; font-size: 13px; margin: 0;">
-                <strong>💡 Tip:</strong> You only need to install once. If you see browser errors later, run the install command again.
-            </p>
         </div>
     `;
 }
-
-// ============================================================================
-// HANDLERS
-// ============================================================================
 
 function openSetupModal() {
     const modal = document.getElementById('playwright-info-modal');
