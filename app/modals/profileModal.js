@@ -64,7 +64,7 @@ function getProfileModalTemplate() {
                             <label>Batch Size <span style="color: #a0aec0; font-size: 12px;">(10-2000, files per batch)</span></label>
                             <input type="number" id="profile-batch-size" value="${customer.batchSize || 10}" min="10" max="2000" />
                             <p style="color: #718096; font-size: 12px; margin-top: 4px;">
-                                ℹ️ Number of files to upload per batch. Smaller = safer, Larger = faster. Recommended: 50-100.
+                                ℹ️ Number of files to upload per batch. Smaller = faster. Recommended: 50-100.
                             </p>
                         </div>
                         
