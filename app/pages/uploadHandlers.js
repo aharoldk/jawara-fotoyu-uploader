@@ -172,9 +172,9 @@ async function startUpload(router) {
         return;
     }
 
-    if (concurrentTabs < 1 || concurrentTabs > 10) {
-        logMessage('Error: Concurrent Tabs must be between 1 and 10', 'error');
-        alert('Concurrent Tabs must be between 1 and 10');
+    if (concurrentTabs < 1 || concurrentTabs > 100) {
+        logMessage('Error: Concurrent Tabs must be between 1 and 100', 'error');
+        alert('Concurrent Tabs must be between 1 and 100');
         return;
     }
 

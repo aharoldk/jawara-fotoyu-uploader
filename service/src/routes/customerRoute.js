@@ -202,7 +202,7 @@ const updateCustomerValidation = Joi.object({
     price: Joi.number().min(0).allow(null).optional(),
     description: Joi.string().allow('', null).optional(),
     fotoTree: Joi.string().allow('', null).optional(),
-    concurrentTabs: Joi.number().integer().min(1).max(10).optional(),
+    concurrentTabs: Joi.number().integer().min(1).max(100).optional(),
     batchSize: Joi.number().integer().min(10).max(2000).optional(),
     subscriptionExpiredAt: Joi.date().allow(null).optional(),
 });
@@ -215,7 +215,7 @@ const customerProfileUpdateValidation = Joi.object({
     price: Joi.number().min(0).allow(null).optional(),
     description: Joi.string().allow('', null).optional(),
     password: Joi.string().min(8).optional(),
-    concurrentTabs: Joi.number().integer().min(1).max(10).optional(),
+    concurrentTabs: Joi.number().integer().min(1).max(100).optional(),
     batchSize: Joi.number().integer().min(10).max(2000).optional(),
     fotoTree: Joi.string().min(3).optional(),
 });

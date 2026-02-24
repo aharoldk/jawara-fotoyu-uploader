@@ -53,8 +53,8 @@ function getProfileModalTemplate() {
                         </div>
                         
                         <div class="form-group">
-                            <label>Concurrent Tabs <span style="color: #a0aec0; font-size: 12px;">(1-10, higher = faster uploads)</span></label>
-                            <input type="number" id="profile-concurrent-tabs" value="${customer.concurrentTabs || 1}" min="1" max="10" />
+                            <label>Concurrent Tabs <span style="color: #a0aec0; font-size: 12px;">(1-100, higher = faster uploads)</span></label>
+                            <input type="number" id="profile-concurrent-tabs" value="${customer.concurrentTabs || 1}" min="1" max="100" />
                             <p style="color: #718096; font-size: 12px; margin-top: 4px;">
                                 ℹ️ Number of browser tabs to use for concurrent uploads. Recommended: 2-4 for most users.
                             </p>

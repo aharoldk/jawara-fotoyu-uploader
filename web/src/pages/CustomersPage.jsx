@@ -328,13 +328,13 @@ const CustomersPage = () => {
                     <Form.Item
                         name="concurrentTabs"
                         label="Concurrent Tabs"
-                        tooltip="Number of browser tabs to use for concurrent uploads (1-10)"
+                        tooltip="Number of browser tabs to use for concurrent uploads (1-100)"
                     >
                         <InputNumber
                             style={{ width: '100%' }}
-                            placeholder="Enter concurrent tabs (1-10)"
+                            placeholder="Enter concurrent tabs (1-100)"
                             min={1}
-                            max={10}
+                            max={100}
                             defaultValue={1}
                         />
                     </Form.Item>

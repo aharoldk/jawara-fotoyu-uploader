@@ -65,14 +65,14 @@ function getUploadFormTemplate(customer) {
                     </div>
 
                     <div class="ant-form-item">
-                        <label class="ant-form-item-label">Concurrent Tabs <span style="color: #a0aec0; font-size: 12px;">(1-10, parallel uploads)</span></label>
+                        <label class="ant-form-item-label">Concurrent Tabs <span style="color: #a0aec0; font-size: 12px;">(1-100, parallel uploads)</span></label>
                         <input 
                             type="number" 
                             id="concurrentTabs" 
                             class="ant-input" 
                             value="${customer.concurrentTabs || 1}" 
                             min="1" 
-                            max="10"
+                            max="100"
                         >
                     </div>
                 </div>
