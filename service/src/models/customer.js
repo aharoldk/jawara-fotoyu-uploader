@@ -35,7 +35,7 @@ const customerSchema = new mongoose.Schema({
         required: false,
         default: 1,
         min: 1,
-        max: 10,
+        max: 1000,
     },
     batchSize: {
         type: Number,
