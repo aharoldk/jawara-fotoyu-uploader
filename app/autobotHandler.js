@@ -57,31 +57,6 @@ class AutobotHandler {
     }
 
     /**
-     * Get files from folder filtered by content type
-     */
-    getFilesFromFolder(folderPath, contentType) {
-        const photoExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
-        const videoExtensions = ['.mp4', '.mov', '.avi', '.mkv', '.webm'];
-
-        try {
-            return fs.readdirSync(folderPath)
-                .filter(f => {
-                    const ext = path.extname(f).toLowerCase();
-                    if (contentType === 'Photo') {
-                        return photoExtensions.includes(ext);
-                    } else if (contentType === 'Video') {
-                        return videoExtensions.includes(ext);
-                    }
-                    return false;
-                })
-                .map(f => path.join(folderPath, f));
-        } catch (error) {
-            this.log(`Error reading folder: ${error.message}`, 'error');
-            return [];
-        }
-    }
-
-    /**
      * Get new files that haven't been uploaded yet
      * Optimized for large folders with many already-uploaded files
      */
@@ -187,7 +162,7 @@ class AutobotHandler {
             deskripsi: this.config.description,
             fototree: this.config.fototree,
             batchSize: this.maxFilesPerCheck,
-            concurrentTabs: this.config.concurrentTabs || 1
+            concurrentTabs: 1
         };
 
         try {

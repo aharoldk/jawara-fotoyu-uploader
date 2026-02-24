@@ -727,10 +727,10 @@ async function runBot(params, mainWindow, isCancelled) {
         // Check if upload was cancelled
         if (isCancelled && isCancelled()) {
             log('Upload was cancelled by user - closing browser...', 'warning');
-            await cleanupBrowser(browser, context, log);
             return { success: false, cancelled: true, totalFiles };
         }
 
+        await cleanupBrowser(browser, context, log);
         log('All uploads completed successfully', 'success');
         return { success: true, totalFiles };
 

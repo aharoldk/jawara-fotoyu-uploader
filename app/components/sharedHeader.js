@@ -6,7 +6,7 @@
 function getSharedHeader(currentPage = 'upload') {
     const customer = JSON.parse(localStorage.getItem('customer') || '{}');
     const version = require('../package.json').version;
-    const enableAutobotFeatures = process.env.ENABLE_AUTOBOT_FEATURES === 'true';
+    const isProUser = customer.subscriptionType === 'Pro';
 
     return `
         <div class="header">
@@ -22,7 +22,10 @@ function getSharedHeader(currentPage = 'upload') {
             </div>
             
             <div style="display: flex; align-items: center; gap: 16px;">
-                <span style="color: #4a5568; font-size: 14px; font-weight: 600;">${customer.username || 'User'}</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="color: #4a5568; font-size: 14px; font-weight: 600;">${customer.username || 'User'}</span>
+                    ${isProUser ? '<span style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; letter-spacing: 0.5px;">✨ PRO</span>' : '<span style="background: #e2e8f0; color: #4a5568; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; letter-spacing: 0.5px;">NORMAL</span>'}
+                </div>
                 
                 <div class="dropdown-menu">
                     <button class="dropdown-toggle" id="menu-toggle">
@@ -35,7 +38,7 @@ function getSharedHeader(currentPage = 'upload') {
                             <span class="icon">📤</span>
                             <span>Upload</span>
                         </button>
-                        ${enableAutobotFeatures ? `
+                        ${isProUser ? `
                         <button class="dropdown-item ${currentPage === 'autobot' ? 'active' : ''}" data-route="autobot">
                             <span class="icon">🤖</span>
                             <span>Autobot</span>
@@ -110,9 +113,30 @@ function initSharedHeader(router) {
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async () => {
-            localStorage.removeItem('token');
-            localStorage.removeItem('customer');
-            router.navigate('login');
+            try {
+                // Get API URL from environment
+                const API_URL = process.env.API_URL || 'http://localhost:3000/api';
+                const token = localStorage.getItem('token');
+
+                // Call logout endpoint
+                if (token) {
+                    await fetch(`${API_URL}/customers/logout`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Logout API error:', error);
+                // Continue with logout even if API call fails
+            } finally {
+                // Clear local storage and redirect
+                localStorage.removeItem('token');
+                localStorage.removeItem('customer');
+                router.navigate('login');
+            }
         });
     }
 }

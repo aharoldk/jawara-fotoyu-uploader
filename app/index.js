@@ -81,10 +81,13 @@ const router = {
                 return;
             }
 
-            // Check if autobot features are enabled
-            const enableAutobotFeatures = process.env.ENABLE_AUTOBOT_FEATURES === 'true';
-            if (!enableAutobotFeatures) {
-                console.log('Autobot features are disabled. Redirecting to upload page.');
+            // Check if user has Pro subscription
+            const customer = JSON.parse(localStorage.getItem('customer') || '{}');
+            const isProUser = customer.subscriptionType === 'Pro';
+
+            if (!isProUser) {
+                console.log('Autobot feature is only available for Pro users. Redirecting to upload page.');
+                alert('⚠️ Autobot feature is only available for Pro subscribers.\n\nPlease contact admin to upgrade your subscription.');
                 this.navigate('upload');
                 return;
             }

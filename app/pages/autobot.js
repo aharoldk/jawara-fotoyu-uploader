@@ -19,8 +19,8 @@ function getAutobotPageTemplate() {
                     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
                         <span style="font-size: 32px;">🤖</span>
                         <div>
-                            <h2 style="margin: 0; color: #2d3748; font-size: 20px; font-weight: 600;">Autobot Configuration</h2>
-                            <p style="margin: 4px 0 0 0; color: #718096; font-size: 14px;">Set up automatic photo upload from your folder</p>
+                            <h3>Hi, I'm Autobot. I'll do your boring work while you busy 💼</h3>
+                            <p style="margin: 4px 0 0 0; color: #718096; font-size: 14px;">Because manually uploading 2000 photos is totally fun... said no one ever</p>
                         </div>
                     </div>
                     
@@ -249,10 +249,8 @@ function initAutobotPage(router) {
                 folderPath: selectedFolder,
                 contentType: contentType,
                 price: parseInt(price, 10),
-                description: description || '',
-                fototree: fototree,
-                batchSize: customer.batchSize || 10,
-                concurrentTabs: customer.concurrentTabs || 1
+                description: description,
+                fototree: fototree
             };
 
             try {
