@@ -58,34 +58,6 @@ async function launchBrowser(log) {
 }
 
 /**
- * Fill username and click Continue button
- */
-async function fillUsername(page, username, log) {
-    log('Filling username...');
-    const usernameInput = page.locator('input[type="text"], input[name="username"], input[placeholder*="username"]').first();
-    await usernameInput.fill(username);
-
-    log('Clicking Lanjut button...');
-    const lanjutButton = page.locator('div[data-cy="AuthLoginFormLoginButton"], button:has-text("Lanjut"), div[label="Lanjut"]').first();
-    await lanjutButton.click();
-    await page.waitForTimeout(500);
-}
-
-/**
- * Fill password and click Login button
- */
-async function fillPassword(page, password, log) {
-    log('Filling password...');
-    const passwordInput = page.locator('input[type="password"], input[name="password"]').first();
-    await passwordInput.fill(password);
-    await page.waitForTimeout(500);
-
-    log('Clicking Masuk button...');
-    const loginButton = page.locator('div[label="Masuk"], div[data-cy="AuthLoginFormLoginButton"]:has-text("Masuk"), button:has-text("Masuk")').first();
-    await loginButton.click();
-}
-
-/**
  * Perform complete login process
  */
 async function performLogin(page, params, log) {
@@ -98,11 +70,21 @@ async function performLogin(page, params, log) {
         timeout: 60000
     });
 
-    log('Waiting for login form...');
-    await page.waitForSelector('input[type="text"], input[name="username"], input[placeholder*="username"]', {timeout: 10000});
+    log('Filling username...');
+    const usernameInput = page.locator('input[type="text"], input[name="username"], input[placeholder*="username"]').first();
+    await usernameInput.fill(username);
 
-    await fillUsername(page, username, log);
-    await fillPassword(page, password, log);
+    log('Clicking Lanjut button...');
+    const lanjutButton = page.locator('div[data-cy="AuthLoginFormLoginButton"], button:has-text("Lanjut"), div[label="Lanjut"]').first();
+    await lanjutButton.click();
+
+    log('Filling password...');
+    const passwordInput = page.locator('input[type="password"], input[name="password"]').first();
+    await passwordInput.fill(password);
+
+    log('Clicking Masuk button...');
+    const loginButton = page.locator('div[label="Masuk"], div[data-cy="AuthLoginFormLoginButton"]:has-text("Masuk"), button:has-text("Masuk")').first();
+    await loginButton.click();
 
     log('Waiting for login to complete...');
     await page.waitForURL(/fotoyu\.com\/(?!login)/, {timeout: 15000});
@@ -149,23 +131,52 @@ async function triggerFileChooser(page, contentType, log) {
     log('Triggering file chooser...');
 
     try {
-        const fileInput = page.locator('input[type="file"]').first();
-        if (await fileInput.count() > 0) {
-            log('Found file input, triggering click...');
-            await fileInput.click({force: true});
-            return;
-        }
+        const dropzoneSelector = contentType === 'Photo'
+            ? 'div.DragDrop__StyledContainer-sc-z8ly7x-0:has(p:has-text("Foto"))'
+            : 'div.DragDrop__StyledContainer-sc-z8ly7x-0:has(p:has-text("Pratinjau Video"))';
+
+        log(`Looking for ${contentType} upload zone with selector: ${dropzoneSelector}`);
+        const dropzone = page.locator(dropzoneSelector).first();
+
+        // Wait for the element to be visible
+        await dropzone.waitFor({ state: 'visible', timeout: 10000 });
 
         log(`Clicking ${contentType} upload zone...`);
-        const dropzoneSelector = contentType === 'Photo'
-            ? 'div:has-text("Foto"), div:has-text("foto"), [class*="dropzone" i]:has-text("Foto")'
-            : 'div:has-text("Video"), div:has-text("video"), [class*="dropzone" i]:has-text("Video")';
-
-        const dropzone = page.locator(dropzoneSelector).first();
         await dropzone.click();
+
+        log('Upload zone clicked successfully');
+
     } catch (clickError) {
-        log(`Error clicking upload zone: ${clickError.message}, trying alternative method...`, 'warning');
-        await page.locator('body').click();
+        log(`Error clicking upload zone: ${clickError.message}, trying alternative methods...`, 'warning');
+
+        // Fallback 1: Try generic text-based selector
+        try {
+            const textSelector = contentType === 'Photo'
+                ? 'p:has-text("Foto")'
+                : 'p:has-text("Pratinjau Video")';
+
+            log(`Trying fallback method with text selector: ${textSelector}`);
+            const textElement = page.locator(textSelector).first();
+            await textElement.click();
+            log('Fallback click successful');
+            return;
+        } catch (fallbackError) {
+            log(`Fallback method failed: ${fallbackError.message}`, 'warning');
+        }
+
+        // Fallback 2: Try to find and force click the hidden file input
+        try {
+            log('Trying to trigger hidden file input directly...');
+            const fileInput = page.locator('input[type="file"]').first();
+
+            // Evaluate in browser context to trigger the click
+            await fileInput.evaluate(input => input.click());
+            log('Hidden file input triggered successfully');
+            return;
+        } catch (inputError) {
+            log(`Hidden input trigger failed: ${inputError.message}`, 'error');
+            throw new Error(`Failed to trigger file chooser: ${clickError.message}`);
+        }
     }
 }
 
@@ -731,6 +742,7 @@ async function createConcurrentTabs(context, numTabs, params, log) {
 async function runMultiTabUpload(context, params, log, isCancelled) {
     const {
         folderPath,
+        filesToUpload,
         contentType,
         batchSize,
         harga,
@@ -739,9 +751,15 @@ async function runMultiTabUpload(context, params, log, isCancelled) {
         concurrentTabs = 1
     } = params;
 
-    // Get files
-    const files = getFilesFromFolder(folderPath, contentType);
-    log(`Found ${files.length} ${contentType.toLowerCase()} files to upload`);
+    // Get files - either from filesToUpload or read from folder
+    let files;
+    if (filesToUpload && Array.isArray(filesToUpload) && filesToUpload.length > 0) {
+        files = filesToUpload;
+        log(`Uploading ${files.length} specific file(s)`);
+    } else {
+        files = getFilesFromFolder(folderPath, contentType);
+        log(`Found ${files.length} ${contentType.toLowerCase()} files to upload`);
+    }
 
     if (files.length === 0) {
         log('No files found to upload', 'warning');

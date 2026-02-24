@@ -127,6 +127,7 @@ function initAutobotPage(router) {
 
     const { ipcRenderer } = require('electron');
     let selectedFolder = null;
+    let isAutobotRunning = false;
 
     // Folder selection
     const selectFolderBtn = document.getElementById('selectFolder');
@@ -137,7 +138,7 @@ function initAutobotPage(router) {
 
                 if (result.success && result.folderPath) {
                     selectedFolder = result.folderPath;
-                    const folderPathDiv = document.getElementById('autobot-folder-path');
+                    const folderPathDiv = document.getElementById('folderPath');
                     const folderName = result.folderPath.split('/').pop() || result.folderPath.split('\\').pop();
 
                     const fileCount = await ipcRenderer.invoke('count-files', result.folderPath);
@@ -202,23 +203,101 @@ function initAutobotPage(router) {
         });
     }
 
-    // Start autobot
-    const startAutobotBtn = document.getElementById('start-autobot-btn');
-    if (startAutobotBtn) {
-        startAutobotBtn.addEventListener('click', async () => {
-            const config = JSON.parse(localStorage.getItem('autobot_config') || '{}');
+    // Listen for autobot logs
+    ipcRenderer.on('autobot-log', (event, { message, type }) => {
+        logAutobotMessage(message, type);
+    });
 
-            if (!config.folder || !config.password || !config.price || !config.fototree) {
-                showMessage('Please save configuration first', 'error');
+    // Start autobot button
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+
+    if (startBtn) {
+        startBtn.addEventListener('click', async () => {
+            // Validate inputs
+            const customer = JSON.parse(localStorage.getItem('customer') || '{}');
+            const password = document.getElementById('autobot-password').value.trim();
+            const price = document.getElementById('autobot-price').value.trim();
+            const fototree = document.getElementById('autobot-fototree').value.trim();
+            const contentType = document.getElementById('autobot-content-type').value;
+            const description = document.getElementById('autobot-description').value.trim();
+
+            if (!selectedFolder) {
+                showMessage('Please select a folder first', 'error');
                 return;
             }
 
-            logAutobotMessage('Starting autobot...', 'info');
-            showMessage('Autobot started! Check logs below.', 'success');
+            if (!password) {
+                showMessage('Please enter your Fotoyu password', 'error');
+                return;
+            }
 
-            // TODO: Integrate with actual bot logic
-            // This would call the bot with the saved configuration
-            logAutobotMessage('Autobot functionality will be integrated with upload bot', 'info');
+            if (!price) {
+                showMessage('Please enter the price (harga)', 'error');
+                return;
+            }
+
+            if (!fototree) {
+                showMessage('Please select a FotoTree', 'error');
+                return;
+            }
+
+            // Prepare autobot configuration
+            const config = {
+                username: customer.username,
+                password: password,
+                folderPath: selectedFolder,
+                contentType: contentType,
+                price: parseInt(price, 10),
+                description: description || '',
+                fototree: fototree,
+                batchSize: customer.batchSize || 10,
+                concurrentTabs: customer.concurrentTabs || 1
+            };
+
+            try {
+                logAutobotMessage('Starting autobot...', 'info');
+                const result = await ipcRenderer.invoke('start-autobot', config);
+
+                if (result.success) {
+                    isAutobotRunning = true;
+                    startBtn.style.display = 'none';
+                    stopBtn.style.display = 'block';
+                    stopBtn.disabled = false;
+                    showMessage('Autobot started successfully!', 'success');
+                } else {
+                    showMessage(result.message || 'Failed to start autobot', 'error');
+                    logAutobotMessage(result.message || 'Failed to start autobot', 'error');
+                }
+            } catch (error) {
+                console.error('Error starting autobot:', error);
+                showMessage('Error starting autobot', 'error');
+                logAutobotMessage(`Error: ${error.message}`, 'error');
+            }
+        });
+    }
+
+    // Stop autobot button
+    if (stopBtn) {
+        stopBtn.addEventListener('click', async () => {
+            try {
+                logAutobotMessage('Stopping autobot...', 'info');
+                const result = await ipcRenderer.invoke('stop-autobot');
+
+                if (result.success) {
+                    isAutobotRunning = false;
+                    startBtn.style.display = 'block';
+                    stopBtn.style.display = 'none';
+                    showMessage('Autobot stopped', 'info');
+                } else {
+                    showMessage(result.message || 'Failed to stop autobot', 'error');
+                    logAutobotMessage(result.message || 'Failed to stop autobot', 'error');
+                }
+            } catch (error) {
+                console.error('Error stopping autobot:', error);
+                showMessage('Error stopping autobot', 'error');
+                logAutobotMessage(`Error: ${error.message}`, 'error');
+            }
         });
     }
 

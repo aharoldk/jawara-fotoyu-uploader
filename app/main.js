@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { runBot } = require('./bot');
+const autobotHandler = require('./autobotHandler');
 
 // Determine if we're in production based on whether the app is packaged
 const isProduction = app.isPackaged;
@@ -137,5 +138,36 @@ ipcMain.handle('stop-bot', async (event) => {
 ipcMain.on('cancel-upload', (event) => {
     botCancelled = true;
     console.log('Upload cancellation requested by user');
+});
+
+// IPC handler for starting autobot
+ipcMain.handle('start-autobot', async (event, config) => {
+    try {
+        return await autobotHandler.start(config, mainWindow);
+    } catch (error) {
+        console.error('Error starting autobot:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+// IPC handler for stopping autobot
+ipcMain.handle('stop-autobot', async (event) => {
+    try {
+        return await autobotHandler.stop();
+    } catch (error) {
+        console.error('Error stopping autobot:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+// IPC handler for getting autobot status
+ipcMain.handle('get-autobot-status', async (event) => {
+    try {
+        const status = autobotHandler.getStatus();
+        return { success: true, status };
+    } catch (error) {
+        console.error('Error getting autobot status:', error);
+        return { success: false, error: error.message };
+    }
 });
 
