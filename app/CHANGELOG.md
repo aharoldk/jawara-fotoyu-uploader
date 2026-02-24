@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.5.0](https://github.com/aharoldk/jawara-fotoyu-uploader/compare/v1.4.0...v1.5.0) (2026-02-24)
+
+
+### Features
+
+* implement autobot functionality with interval checks and file tracking ([6d0ae01](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/6d0ae01aac1ab134db42c6f2d5dac9e7897b625e))
+* implement autobot page and shared header component with dropdown menu ([ab76639](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/ab76639d20127a179e2088e208b7e3971710636d))
+* update setup instructions for Node.js and Playwright installation ([9d32a5c](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/9d32a5cbc4430cf91f87113075ce4f2e2617665b))
+
+
+### Bug Fixes
+
+* increase max limit for batch size to improve upload flexibility ([35c59e7](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/35c59e77952607f374267f02c17e44f7291c63f3))
+* update batch size tooltip for clarity on upload speed ([f749efd](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/f749efdba76805019ea3ca6bf2eb21434359cd39))
+
 ## [1.4.0](https://github.com/aharoldk/jawara-fotoyu-uploader/compare/v1.3.0...v1.4.0) (2026-02-22)
 
 
