@@ -164,9 +164,9 @@ async function deleteExistingCustomer(request, h) {
 
 async function updateCustomerSubscription(request, h) {
     const { id } = request.params;
-    const { subscriptionExpiredAt } = request.payload;
+    const { subscriptionType, subscriptionExpiredAt } = request.payload;
 
-    const customer = await updateSubscription(id, subscriptionExpiredAt);
+    const customer = await updateSubscription(id, subscriptionType, subscriptionExpiredAt);
 
     if (!customer) {
         throw Boom.notFound('Customer not found');
@@ -189,9 +189,7 @@ const customerValidation = Joi.object({
     username: Joi.string().required(),
     city: Joi.string().allow('', null).optional(),
     whatsapp: Joi.string().allow('', null).optional(),
-    price: Joi.number().min(0).allow(null).optional(),
-    description: Joi.string().allow('', null).optional(),
-    fotoTree: Joi.string().allow('', null).optional(),
+    subscriptionType: Joi.string().valid('Normal', 'Pro').optional(),
     subscriptionExpiredAt: Joi.date().allow(null).optional(),
 });
 
@@ -204,10 +202,12 @@ const updateCustomerValidation = Joi.object({
     fotoTree: Joi.string().allow('', null).optional(),
     concurrentTabs: Joi.number().integer().min(1).max(100).optional(),
     batchSize: Joi.number().integer().min(10).max(2000).optional(),
+    subscriptionType: Joi.string().valid('Normal', 'Pro').optional(),
     subscriptionExpiredAt: Joi.date().allow(null).optional(),
 });
 
 const subscriptionValidation = Joi.object({
+    subscriptionType: Joi.string().valid('Normal', 'Pro').optional(),
     subscriptionExpiredAt: Joi.date().allow(null).required(),
 });
 
@@ -262,7 +262,7 @@ module.exports = [
     // Admin CRUD endpoints
     {
         method: 'GET',
-        path: '/api/customers',
+        path: '/api/admin/customers',
         options: {
             pre: [{ method: authMiddleware }],
         },
@@ -278,7 +278,7 @@ module.exports = [
     },
     {
         method: 'POST',
-        path: '/api/customers',
+        path: '/api/admin/customers',
         options: {
             pre: [{ method: authMiddleware }],
             validate: {
@@ -289,7 +289,7 @@ module.exports = [
     },
     {
         method: 'PUT',
-        path: '/api/customers/{id}',
+        path: '/api/admin/customers/{id}',
         options: {
             pre: [{ method: authMiddleware }],
             validate: {
@@ -300,7 +300,7 @@ module.exports = [
     },
     {
         method: 'DELETE',
-        path: '/api/customers/{id}',
+        path: '/api/admin/customers/{id}',
         options: {
             pre: [{ method: authMiddleware }],
         },

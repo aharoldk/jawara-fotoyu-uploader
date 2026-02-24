@@ -37,6 +37,7 @@ async function loginCustomer(username, password, deviceInfo = null, ipAddress = 
         fotoTree: customer.fotoTree,
         concurrentTabs: customer.concurrentTabs,
         batchSize: customer.batchSize,
+        subscriptionType: customer.subscriptionType,
         subscriptionExpiredAt: customer.subscriptionExpiredAt,
         createdAt: customer.createdAt,
         updatedAt: customer.updatedAt,

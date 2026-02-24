@@ -43,10 +43,17 @@ async function findAllCustomers() {
     return await Customer.find({}).select('-password').sort({ createdAt: -1 });
 }
 
-async function updateSubscription(id, subscriptionExpiredAt) {
+async function updateSubscription(id, subscriptionType, subscriptionExpiredAt) {
+    const updateData = { subscriptionExpiredAt };
+
+    // Only update subscriptionType if it's provided
+    if (subscriptionType) {
+        updateData.subscriptionType = subscriptionType;
+    }
+
     return await Customer.findByIdAndUpdate(
         id,
-        { subscriptionExpiredAt },
+        updateData,
         { new: true }
     ).select('-password');
 }

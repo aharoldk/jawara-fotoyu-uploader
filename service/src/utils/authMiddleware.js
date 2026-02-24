@@ -12,7 +12,11 @@ const authMiddleware = async (request, h) => {
     const token = authHeader.substring(7);
     const decoded = verify(token);
 
-    if (!decoded || decoded.role !== 'user') {
+    if (!decoded) {
+        return h.response({ error: 'Unauthorized - Invalid or expired token' }).code(401).takeover();
+    }
+
+    if (decoded.role !== 'user') {
         return h.response({ error: 'Forbidden - Admin access required' }).code(403).takeover();
     }
 
@@ -31,7 +35,11 @@ const customerAuthMiddleware = async (request, h) => {
     const token = authHeader.substring(7);
     const decoded = verify(token);
 
-    if (!decoded || decoded.role !== 'customer') {
+    if (!decoded) {
+        return h.response({ error: 'Unauthorized - Invalid or expired token' }).code(401).takeover();
+    }
+
+    if (decoded.role !== 'customer') {
         return h.response({ error: 'Forbidden - Customer access required' }).code(403).takeover();
     }
 

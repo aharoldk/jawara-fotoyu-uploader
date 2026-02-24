@@ -41,6 +41,7 @@ async function seed() {
       price: 150000,
       description: 'Professional photographer specializing in wedding and portrait photography',
       concurrentTabs: 2,
+      subscriptionType: 'Normal',
       subscriptionExpiredAt: null,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -53,6 +54,7 @@ async function seed() {
       price: 200000,
       description: 'Event photographer with 5 years experience in corporate events',
       concurrentTabs: 4,
+      subscriptionType: 'Pro',
       subscriptionExpiredAt: new Date(Date.now() + 30*24*60*60*1000), // 30 days from now
       createdAt: new Date(),
       updatedAt: new Date()
@@ -65,6 +67,7 @@ async function seed() {
       price: 35000,
       description: 'Professional photographer specializing in wedding and portrait photography',
       concurrentTabs: 1,
+      subscriptionType: 'Normal',
       subscriptionExpiredAt: null,
       createdAt: new Date(),
       updatedAt: new Date()

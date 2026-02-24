@@ -21,14 +21,17 @@ const customerSchema = new mongoose.Schema({
     price: {
         type: Number,
         required: false,
+        min: 50000
     },
     description: {
         type: String,
         required: false,
+        default: null,
     },
     fotoTree: {
         type: String,
         required: false,
+        default: null,
     },
     concurrentTabs: {
         type: Number,
@@ -43,6 +46,12 @@ const customerSchema = new mongoose.Schema({
         default: 10,
         min: 10,
         max: 2000,
+    },
+    subscriptionType: {
+        type: String,
+        required: false,
+        enum: ['Normal', 'Pro'],
+        default: 'Normal',
     },
     subscriptionExpiredAt: {
         type: Date,
