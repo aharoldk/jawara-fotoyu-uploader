@@ -12,10 +12,10 @@ import {
     Popconfirm,
     Tag,
     Typography,
+    Select,
 } from 'antd';
 import {
     PlusOutlined,
-    EditOutlined,
     DeleteOutlined,
     CalendarOutlined,
     LogoutOutlined,
@@ -88,6 +88,7 @@ const CustomersPage = () => {
     const handleSubscription = (record) => {
         setSelectedCustomer(record);
         subscriptionForm.setFieldsValue({
+            subscriptionType: record.subscriptionType || 'Normal',
             subscriptionExpiredAt: record.subscriptionExpiredAt
                 ? dayjs(record.subscriptionExpiredAt)
                 : null,
@@ -145,7 +146,11 @@ const CustomersPage = () => {
                 ? values.subscriptionExpiredAt.toISOString()
                 : null;
 
-            await customerAPI.updateSubscription(selectedCustomer.id, subscriptionExpiredAt);
+            await customerAPI.updateSubscription(
+                selectedCustomer.id,
+                values.subscriptionType,
+                subscriptionExpiredAt
+            );
             message.success('Subscription updated successfully');
 
             setSubscriptionModalVisible(false);
@@ -173,16 +178,15 @@ const CustomersPage = () => {
             ),
         },
         {
-            title: 'City',
-            dataIndex: 'city',
-            key: 'city',
+            title: 'Type',
+            dataIndex: 'subscriptionType',
+            key: 'subscriptionType',
             width: 100,
-        },
-        {
-            title: 'WhatsApp',
-            dataIndex: 'whatsapp',
-            key: 'whatsapp',
-            width: 130,
+            render: (type) => (
+                <Tag color={type === 'Pro' ? 'blue' : 'default'}>
+                    {type || 'Normal'}
+                </Tag>
+            ),
         },
         {
             title: 'Subscription',
@@ -203,10 +207,22 @@ const CustomersPage = () => {
             },
         },
         {
+            title: 'City',
+            dataIndex: 'city',
+            key: 'city',
+            width: 100,
+        },
+        {
+            title: 'WhatsApp',
+            dataIndex: 'whatsapp',
+            key: 'whatsapp',
+            width: 130,
+        },
+        {
             title: 'Actions',
             key: 'actions',
             fixed: 'right',
-            width: 100,
+            width: 60,
             render: (_, record) => (
                 <Space size="small" wrap>
                     <Button
@@ -306,37 +322,15 @@ const CustomersPage = () => {
                         <Input placeholder="Enter WhatsApp number" />
                     </Form.Item>
 
-                    <Form.Item name="price" label="Price">
-                        <InputNumber
-                            style={{ width: '100%' }}
-                            placeholder="Enter price"
-                            min={0}
-                            formatter={(value) =>
-                                `Rp ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                            }
-                            parser={(value) => value.replace(/Rp\s?|(,*)/g, '')}
-                        />
-                    </Form.Item>
-
-                    <Form.Item name="description" label="Description">
-                        <TextArea
-                            rows={4}
-                            placeholder="Enter description"
-                        />
-                    </Form.Item>
-
                     <Form.Item
-                        name="concurrentTabs"
-                        label="Concurrent Tabs"
-                        tooltip="Number of browser tabs to use for concurrent uploads (1-100)"
+                        name="subscriptionType"
+                        label="Subscription Type"
+                        initialValue="Normal"
                     >
-                        <InputNumber
-                            style={{ width: '100%' }}
-                            placeholder="Enter concurrent tabs (1-100)"
-                            min={1}
-                            max={100}
-                            defaultValue={1}
-                        />
+                        <Select placeholder="Select subscription type">
+                            <Select.Option value="Normal">Normal</Select.Option>
+                            <Select.Option value="Pro">Pro</Select.Option>
+                        </Select>
                     </Form.Item>
 
                     <Form.Item name="subscriptionExpiredAt" label="Subscription Expires At">
@@ -364,6 +358,17 @@ const CustomersPage = () => {
                     layout="vertical"
                     autoComplete="off"
                 >
+                    <Form.Item
+                        name="subscriptionType"
+                        label="Subscription Type"
+                        rules={[{ required: true, message: 'Please select subscription type!' }]}
+                    >
+                        <Select placeholder="Select subscription type">
+                            <Select.Option value="Normal">Normal</Select.Option>
+                            <Select.Option value="Pro">Pro</Select.Option>
+                        </Select>
+                    </Form.Item>
+
                     <Form.Item
                         name="subscriptionExpiredAt"
                         label="Subscription Expires At"
