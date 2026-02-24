@@ -26,6 +26,14 @@ function getProfileModalTemplate() {
                         </div>
                         
                         <div class="form-group">
+                            <label>Subscription Type</label>
+                            <input type="text" value="${customer.subscriptionType || 'Normal'}" readonly style="background-color: #f7fafc; cursor: not-allowed;" />
+                            <p style="color: #718096; font-size: 12px; margin-top: 4px;">
+                                ${customer.subscriptionType === 'Pro' ? '✨ Pro subscription active' : 'ℹ️ Contact admin to upgrade to Pro'}
+                            </p>
+                        </div>
+                        
+                        <div class="form-group">
                             <label>Price</label>
                             <input type="number" id="profile-price" value="${customer.price || ''}" />
                         </div>
