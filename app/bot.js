@@ -135,7 +135,6 @@ async function triggerFileChooser(page, contentType, log) {
             ? 'div.DragDrop__StyledContainer-sc-z8ly7x-0:has(p:has-text("Foto"))'
             : 'div.DragDrop__StyledContainer-sc-z8ly7x-0:has(p:has-text("Pratinjau Video"))';
 
-        log(`Looking for ${contentType} upload zone with selector: ${dropzoneSelector}`);
         const dropzone = page.locator(dropzoneSelector).first();
 
         // Wait for the element to be visible
@@ -149,7 +148,6 @@ async function triggerFileChooser(page, contentType, log) {
     } catch (clickError) {
         log(`Error clicking upload zone: ${clickError.message}, trying alternative methods...`, 'warning');
 
-        // Fallback 1: Try generic text-based selector
         try {
             const textSelector = contentType === 'Photo'
                 ? 'p:has-text("Foto")'
@@ -164,15 +162,12 @@ async function triggerFileChooser(page, contentType, log) {
             log(`Fallback method failed: ${fallbackError.message}`, 'warning');
         }
 
-        // Fallback 2: Try to find and force click the hidden file input
         try {
             log('Trying to trigger hidden file input directly...');
             const fileInput = page.locator('input[type="file"]').first();
 
-            // Evaluate in browser context to trigger the click
             await fileInput.evaluate(input => input.click());
             log('Hidden file input triggered successfully');
-            return;
         } catch (inputError) {
             log(`Hidden input trigger failed: ${inputError.message}`, 'error');
             throw new Error(`Failed to trigger file chooser: ${clickError.message}`);
@@ -201,32 +196,6 @@ async function uploadFilesBatch(page, batch, contentType, log, isCancelled) {
     await fileChooser.setFiles(batch);
 
     log(`Files selected, waiting for compression to complete...`);
-
-    // Wait with cancellation checks during compression
-    // Files typically take 1-5 seconds to compress depending on size
-    const maxWaitTime = 30000; // 30 seconds max
-    const checkInterval = 500; // Check every 500ms
-    let waited = 0;
-
-    while (waited < maxWaitTime) {
-        if (isCancelled && isCancelled()) {
-            log('Upload cancelled during file compression', 'warning');
-            throw new Error('Upload cancelled by user');
-        }
-        await page.waitForTimeout(checkInterval);
-        waited += checkInterval;
-
-        // Try to detect if compression is complete by checking for upload form elements
-        try {
-            const hasForm = await page.locator('input[name="price"], textarea[name="description"]').count() > 0;
-            if (hasForm) {
-                log('File compression completed');
-                break;
-            }
-        } catch (e) {
-            // Continue waiting
-        }
-    }
 }
 
 /**
@@ -307,8 +276,7 @@ async function fillFotoTree(page, fototree, log) {
     const input = page.locator('input[placeholder*="FotoTree" i]').first();
     await input.waitFor({ state: 'visible' });
 
-    await input.fill('');
-    await input.type(fototree, { delay: 80 });
+    await input.fill(fototree, { delay: 80 });
 
     // Wait for the exact visible text in dropdown
     const optionTitle = page.getByText(fototree, { exact: true });
@@ -366,7 +334,7 @@ async function fillMetadata(page, metadata, log, isCancelled) {
     try {
         await page.waitForSelector(
             'input[name="price"], textarea[placeholder*="Ceritakan tentang konten kamu"], input[placeholder*="FotoTree"]',
-            { state: 'visible', timeout: 15000 }
+            { state: 'visible', timeout: 0 }
         );
         log('Metadata form detected and visible!');
     } catch (error) {
@@ -420,10 +388,19 @@ async function fillMetadata(page, metadata, log, isCancelled) {
  * Handle result after upload (Success or Duplicate)
  * Returns: true if duplicate detected, false if success
  */
-async function handleDuplicateModal(page, log) {
+async function handleUploadResult(page, log) {
     try {
-        // Wait a bit for modal to appear
-        await page.waitForTimeout(2000);
+        log('Waiting for upload to complete...');
+
+        const successSelector = 'p:has-text("Diunggah! Tetapi"), p:has-text("konten terdeteksi sebagai duplikat"), p:has-text("berhasil"), p:has-text("selesai")';
+
+        // Wait indefinitely until the result modal appears (no timeout)
+        await page.locator(successSelector).first().waitFor({
+            state: 'visible',
+            timeout: 0
+        });
+
+        log('Upload result modal appeared, checking result...');
 
         // Check if duplicate modal exists
         const duplicateModal = page.locator('p:has-text("Diunggah! Tetapi")');
@@ -461,7 +438,7 @@ async function handleDuplicateModal(page, log) {
         }
 
         // Check for success indicators
-        const successModal = page.locator('p:has-text("berhasil"), p:has-text("selesai"), p:has-text("Diunggah")');
+        const successModal = page.locator('p:has-text("berhasil"), p:has-text("selesai")');
         if (await successModal.count() > 0) {
             log('✓ Upload successful!', 'success');
 
@@ -472,96 +449,24 @@ async function handleDuplicateModal(page, log) {
                 await page.waitForTimeout(500);
             }
         }
-
-        return false; // Success (no duplicate)
-
     } catch (error) {
         log(`Error checking result: ${error.message}`, 'warning');
-        return false; // Assume success if can't determine
     }
 }
 
 /**
- * Click the publish/upload button and wait for completion
+ * Click the publish/upload button
  */
-async function publishUpload(page, log, isCancelled) {
+async function publishUpload(page, log) {
     log('Looking for Unggah button to publish...');
-    await page.waitForTimeout(1000);
 
-    // Check cancellation before publishing
-    if (isCancelled && isCancelled()) {
-        log('Upload cancelled before publishing', 'warning');
-        throw new Error('Upload cancelled by user');
-    }
+    const unggahButton = page.locator(
+        'div[label="Unggah"]:has-text("Unggah"), ' +
+        'button:has-text("Unggah"), ' +
+        'div[data-testid="button"]:has-text("Unggah")'
+    ).first();
 
-    try {
-        const unggahButton = page.locator(
-            'div[label="Unggah"]:has-text("Unggah"), ' +
-            'button:has-text("Unggah"), ' +
-            'div[data-testid="button"]:has-text("Unggah")'
-        ).first();
-
-        if (await unggahButton.count() > 0) {
-            log('Clicking Unggah button to publish...');
-            await unggahButton.click();
-
-            log('Waiting for upload to complete...');
-
-            // Wait for result modal to appear (success or duplicate)
-            // Use polling with cancellation checks
-            const maxWaitTime = 60000; // 60 seconds max for upload
-            const checkInterval = 1000; // Check every second
-            let waited = 0;
-            let completed = false;
-
-            while (waited < maxWaitTime) {
-                if (isCancelled && isCancelled()) {
-                    log('Upload cancelled during upload processing', 'warning');
-                    throw new Error('Upload cancelled by user');
-                }
-
-                try {
-                    const resultSelector = await page.locator(
-                        'p:has-text("Diunggah! Tetapi"), ' +
-                        'p:has-text("konten terdeteksi sebagai duplikat"), ' +
-                        'p:has-text("berhasil"), ' +
-                        'p:has-text("selesai"), ' +
-                        'p:has-text("Diunggah")'
-                    ).count();
-
-                    if (resultSelector > 0) {
-                        completed = true;
-                        break;
-                    }
-                } catch (e) {
-                    // Continue waiting
-                }
-
-                await page.waitForTimeout(checkInterval);
-                waited += checkInterval;
-            }
-
-            if (!completed) {
-                log('Upload completion modal not detected, but continuing...', 'warning');
-            } else {
-                log('Upload process completed');
-            }
-
-            // Additional wait for UI to stabilize
-            await page.waitForTimeout(2000);
-
-            log('Upload published successfully!');
-        } else {
-            log('Unggah button not found - upload may be processing automatically', 'warning');
-        }
-    } catch (uploadError) {
-        // Check if error is due to cancellation
-        if (uploadError.message && uploadError.message.includes('cancelled by user')) {
-            throw uploadError;
-        }
-        log(`Error clicking Unggah button: ${uploadError.message}`, 'error');
-        throw uploadError;
-    }
+    await unggahButton.click();
 }
 
 /**
@@ -608,7 +513,7 @@ async function processSingleBatch(page, batch, batchNumber, totalBatches, params
 
     // Step 4: Publish/Upload
     log(`[Batch ${batchNumber}] Step 4: Publishing upload...`);
-    await publishUpload(page, log, isCancelled);
+    await publishUpload(page, log);
 
     if (isCancelled && isCancelled()) {
         log(`[Batch ${batchNumber}] Upload cancelled by user`, 'warning');
@@ -617,15 +522,7 @@ async function processSingleBatch(page, batch, batchNumber, totalBatches, params
 
     // Step 5: Handle Result (Success or Duplicate)
     log(`[Batch ${batchNumber}] Step 5: Checking result...`);
-    const isDuplicate = await handleDuplicateModal(page, log);
-
-    if (isDuplicate) {
-        log(`[Batch ${batchNumber}] Result: Duplicate detected`, 'warning');
-    } else {
-        log(`[Batch ${batchNumber}] Result: Upload successful`, 'success');
-    }
-
-    log(`[Batch ${batchNumber}] ✓ Completed successfully`);
+    await handleUploadResult(page, log);
 }
 
 /**
