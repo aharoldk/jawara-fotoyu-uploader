@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0](https://github.com/aharoldk/jawara-fotoyu-uploader/compare/v1.5.0...v2.0.0) (2026-02-25)
+
+
+### Features
+
+* add subscription type display in profile modal with upgrade prompt ([48b035c](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/48b035c8c3354d91fa2e9f5c6bb23262baa9de7d))
+* add subscriptionType field and update related functionality for customer management ([46c826e](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/46c826ec730f4e530f30e1f3f9cbb47aca9d3c23))
+* enhance subscription management with subscriptionType field and error handling ([71174b5](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/71174b56177ba7c45880a52cacd471f08aa08d36))
+* refactor upload process to use multiple browser windows instead of tabs ([ce244dd](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/ce244dd8a0335a57180140226c150f38837948ae))
+* update autobot features to be exclusive for Pro users and enhance UI text ([7748560](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/7748560eb2e49e925bee263c57e808d7c84c8ec6))
+
 ## [1.5.0](https://github.com/aharoldk/jawara-fotoyu-uploader/compare/v1.4.0...v1.5.0) (2026-02-24)
 
 
