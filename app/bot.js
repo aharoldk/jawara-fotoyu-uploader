@@ -34,28 +34,6 @@ function getFilesFromFolder(folderPath, contentType) {
         .map(f => path.join(folderPath, f));
 }
 
-/**
- * Launch browser with configured settings
- */
-async function launchBrowser(log) {
-    log('Launching Chrome browser...');
-
-    const browser = await chromium.launch({
-        headless: false,
-        args: ['--start-maximized']
-    });
-
-    const context = await browser.newContext({
-        viewport: null,
-        permissions: ['geolocation']
-    });
-
-    const page = await context.newPage();
-
-    log('Browser launched successfully');
-
-    return { browser, context, page };
-}
 
 /**
  * Perform complete login process
@@ -281,7 +259,7 @@ async function fillFotoTree(page, fototree, log) {
     // Wait for the exact visible text in dropdown
     const optionTitle = page.getByText(fototree, { exact: true });
 
-    await optionTitle.waitFor({ state: 'visible', timeout: 5000 });
+    await optionTitle.waitFor({ state: 'visible', timeout: 0 });
 
     // Click the clickable parent card
     await optionTitle.locator('xpath=ancestor::div[1]').click();
@@ -526,16 +504,16 @@ async function processSingleBatch(page, batch, batchNumber, totalBatches, params
 }
 
 /**
- * Process batches in a single tab from a shared queue
- * Each tab processes batches one by one until queue is empty
+ * Process batches in a single window from a shared queue.
+ * Each window processes batches one by one until the queue is empty.
  */
-async function processTabBatches(page, tabId, batchQueue, params, metadata, log, isCancelled, stats) {
-    log(`[Tab ${tabId}] Initialized and ready to process batches`);
+async function processWindowBatches(page, windowId, batchQueue, params, metadata, log, isCancelled, stats) {
+    log(`[Window ${windowId}] Initialized and ready to process batches`);
 
     while (batchQueue.length > 0) {
         // Check if upload was cancelled
         if (isCancelled && isCancelled()) {
-            log(`[Tab ${tabId}] Upload cancelled, stopping...`, 'warning');
+            log(`[Window ${windowId}] Upload cancelled, stopping...`, 'warning');
             break;
         }
 
@@ -546,7 +524,7 @@ async function processTabBatches(page, tabId, batchQueue, params, metadata, log,
         const { batch, batchNumber, totalBatches } = batchInfo;
 
         try {
-            log(`[Tab ${tabId}] Starting batch ${batchNumber}/${totalBatches}`);
+            log(`[Window ${windowId}] Starting batch ${batchNumber}/${totalBatches}`);
 
             // Process this batch through the complete flow (with cancellation check)
             await processSingleBatch(page, batch, batchNumber, totalBatches, params, metadata, log, isCancelled);
@@ -555,88 +533,74 @@ async function processTabBatches(page, tabId, batchQueue, params, metadata, log,
             stats.filesUploaded += batch.length;
             stats.batchesCompleted++;
 
-            log(`[Tab ${tabId}] ✓ Batch ${batchNumber}/${totalBatches} finished`);
+            log(`[Window ${windowId}] ✓ Batch ${batchNumber}/${totalBatches} finished`);
 
             // Check if more batches exist
             if (batchQueue.length > 0) {
-                log(`[Tab ${tabId}] More batches available (${batchQueue.length} remaining), continuing...`);
+                log(`[Window ${windowId}] More batches available (${batchQueue.length} remaining), continuing...`);
                 await page.waitForTimeout(2000);
             } else {
-                log(`[Tab ${tabId}] No more batches in queue`);
+                log(`[Window ${windowId}] No more batches in queue`);
             }
 
         } catch (error) {
             // Check if error is due to cancellation
             if (error.message.includes('cancelled by user')) {
-                log(`[Tab ${tabId}] ✗ Upload cancelled by user`, 'warning');
+                log(`[Window ${windowId}] ✗ Upload cancelled by user`, 'warning');
                 break; // Stop processing immediately
             }
 
-            log(`[Tab ${tabId}] ✗ Error in batch ${batchNumber}: ${error.message}`, 'error');
-            log(`[Tab ${tabId}] Continuing with next batch...`);
+            log(`[Window ${windowId}] ✗ Error in batch ${batchNumber}: ${error.message}`, 'error');
+            log(`[Window ${windowId}] Continuing with next batch...`);
             // Continue with next batch despite error
         }
     }
 
-    log(`[Tab ${tabId}] Finished all batches`);
+    log(`[Window ${windowId}] Finished all batches`);
 }
 
 /**
- * Create and initialize multiple tabs for concurrent uploads
+ * Launch a separate browser window (its own browser instance + context),
+ * perform login, and return { browser, context, page }.
  */
-async function createConcurrentTabs(context, numTabs, params, log) {
-    log(`Creating ${numTabs} concurrent tabs...`);
+async function launchWindow(windowId, params, log) {
+    log(`[Window ${windowId}] Launching separate browser window...`);
 
-    const { username } = params;
-    const tabs = [];
+    const browser = await chromium.launch({
+        headless: false,
+    });
 
-    for (let i = 0; i < numTabs; i++) {
-        const page = await context.newPage();
-        await page.bringToFront();
+    const context = await browser.newContext({
+        viewport: null,
+        permissions: ['geolocation']
+    });
 
-        log(`Tab ${i + 1}/${numTabs} created`);
+    const page = await context.newPage();
 
-        // Only perform full login for the first tab
-        // Other tabs will share the same session/cookies
-        if (i === 0) {
-            log(`[Tab ${i + 1}] Performing login...`);
-            await performLogin(page, params, log);
-        } else {
-            // For subsequent tabs, just navigate to profile page (already logged in via shared context)
-            log(`[Tab ${i + 1}] Navigating to profile page (using shared session)...`);
-            try {
-                await page.goto(`https://www.fotoyu.com/profile/${username}?type=all`, {
-                    waitUntil: 'domcontentloaded',
-                    timeout: 60000
-                });
-                log(`[Tab ${i + 1}] Ready (session active)`);
-            } catch (error) {
-                if (error.message.includes('Timeout')) {
-                    log(`[Tab ${i + 1}] Page load slow but continuing...`, 'warning');
-                    // Continue anyway, page likely has enough content loaded
-                } else {
-                    throw error;
-                }
-            }
-        }
+    log(`[Window ${windowId}] Browser window launched, performing login...`);
+    await performLogin(page, params, log);
+    log(`[Window ${windowId}] Login successful, window ready`);
 
-        tabs.push({
-            id: i + 1,
-            page: page
-        });
+    return { browser, context, page };
+}
 
-        // Small delay between tab creations
-        await page.waitForTimeout(1000);
+/**
+ * Cleanup a single browser window's resources.
+ */
+async function cleanupWindow(windowId, browser, context, log) {
+    try {
+        if (context) await context.close();
+        if (browser) await browser.close();
+        log(`[Window ${windowId}] Browser window closed`);
+    } catch (error) {
+        log(`[Window ${windowId}] Error during cleanup: ${error.message}`, 'warning');
     }
-
-    log(`All ${numTabs} tabs created and ready!`);
-    return tabs;
 }
 
 /**
- * Distribute batches across multiple tabs and process concurrently
+ * Distribute batches across multiple independent browser windows and process concurrently.
  */
-async function runMultiTabUpload(context, params, log, isCancelled) {
+async function runMultiWindowUpload(params, log, isCancelled) {
     const {
         folderPath,
         filesToUpload,
@@ -645,8 +609,10 @@ async function runMultiTabUpload(context, params, log, isCancelled) {
         harga,
         deskripsi,
         fototree,
-        concurrentTabs = 1
+        concurrentTabs
     } = params;
+
+    const numWindows = concurrentTabs; // reuse concurrentTabs param, now means windows
 
     // Get files - either from filesToUpload or read from folder
     let files;
@@ -673,18 +639,38 @@ async function runMultiTabUpload(context, params, log, isCancelled) {
     for (let i = 0; i < files.length; i += batchSize) {
         const batch = files.slice(i, i + batchSize);
         const batchNumber = Math.floor(i / batchSize) + 1;
-
-        batchQueue.push({
-            batch,
-            batchNumber,
-            totalBatches
-        });
+        batchQueue.push({ batch, batchNumber, totalBatches });
     }
 
-    log(`Created ${totalBatches} batches to be processed by ${concurrentTabs} tab(s)`);
+    log(`Created ${totalBatches} batches to be processed by ${numWindows} window(s)`);
 
-    // Create tabs
-    const tabs = await createConcurrentTabs(context, concurrentTabs, params, log);
+    // Launch all windows concurrently (each does its own login)
+    log(`Launching ${numWindows} browser window(s)...`);
+    const windowLaunchPromises = [];
+    for (let i = 0; i < numWindows; i++) {
+        // Stagger launches slightly to avoid race conditions at login
+        windowLaunchPromises.push(
+            new Promise(resolve => setTimeout(resolve, i * 4000))
+                .then(() => launchWindow(i + 1, params, log))
+                .then(win => ({ ...win, id: i + 1 }))
+        );
+    }
+
+    let windows;
+    try {
+        windows = await Promise.all(windowLaunchPromises);
+    } catch (launchError) {
+        log(`Failed to launch/login one or more windows: ${launchError.message} — closing all browsers...`, 'error');
+        // Collect any windows that did launch successfully and close them
+        const settled = await Promise.allSettled(windowLaunchPromises);
+        await Promise.allSettled(
+            settled
+                .filter(r => r.status === 'fulfilled' && r.value)
+                .map(r => cleanupWindow(r.value.id, r.value.browser, r.value.context, log))
+        );
+        throw launchError;
+    }
+    log(`All ${numWindows} window(s) ready, starting concurrent upload...`);
 
     // Shared statistics
     const stats = {
@@ -692,85 +678,40 @@ async function runMultiTabUpload(context, params, log, isCancelled) {
         batchesCompleted: 0
     };
 
-    // Process batches concurrently across all tabs
-    log('Starting concurrent batch processing...');
-
-    const tabPromises = tabs.map(tab =>
-        processTabBatches(tab.page, tab.id, batchQueue, params, metadata, log, isCancelled, stats)
+    // Process batches concurrently across all windows
+    const windowPromises = windows.map(win =>
+        processWindowBatches(win.page, win.id, batchQueue, params, metadata, log, isCancelled, stats)
+            .finally(() => cleanupWindow(win.id, win.browser, win.context, log))
     );
 
-    // Wait for all tabs to complete
-    await Promise.all(tabPromises);
+    // Wait for all windows to complete
+    await Promise.all(windowPromises);
 
-    log(`All tabs completed! Total: ${stats.filesUploaded} files uploaded in ${stats.batchesCompleted} batches`, 'success');
+    log(`All windows completed! Total: ${stats.filesUploaded} files uploaded in ${stats.batchesCompleted} batches`, 'success');
     return stats.filesUploaded;
 }
 
 async function runBot(params, mainWindow, isCancelled) {
     const log = createLogger(mainWindow);
-    let browser = null;
-    let context = null;
 
     try {
-        // Launch browser
-        const launchResult = await launchBrowser(log);
-        browser = launchResult.browser;
-        context = launchResult.context;
+        const concurrentWindows = params.concurrentTabs || 1;
+        log(`Using ${concurrentWindows} concurrent browser window(s) for uploading`);
 
-        // Determine number of concurrent tabs (default to 1 for backward compatibility)
-        const concurrentTabs = params.concurrentTabs || 1;
-        log(`Using ${concurrentTabs} concurrent tab(s) for uploading`);
+        // Run multi-window upload (each window manages its own browser instance)
+        const totalFiles = await runMultiWindowUpload(params, log, isCancelled);
 
-        // Run multi-tab upload
-        const totalFiles = await runMultiTabUpload(context, params, log, isCancelled);
-
-        // Check if upload was cancelled
-        if (isCancelled && isCancelled()) {
-            log('Upload was cancelled by user - closing browser...', 'warning');
-            return { success: false, cancelled: true, totalFiles };
-        }
-
-        await cleanupBrowser(browser, context, log);
-        log('All uploads completed successfully', 'success');
         return { success: true, totalFiles };
 
     } catch (error) {
         if (error.message && error.message.includes('cancelled by user')) {
-            log('Upload cancelled by user - closing browser...', 'warning');
-            await cleanupBrowser(browser, context, log);
+            log('Upload cancelled by user', 'warning');
             return { success: false, cancelled: true };
         }
 
         console.error("An error occurred during bot execution:", error);
-        log(`Error: ${error.message}`, 'error');
+        log(`Fatal error: ${error.message}`, 'error');
         return { success: false, error: error.message };
-    } finally {
-        // Note: Browser is only closed on cancellation or error
-        // On successful completion, browser stays open for user to review
-        if (isCancelled && isCancelled()) {
-            await cleanupBrowser(browser, context, log);
-        } else {
-            log('Bot execution completed - browser will remain open for review');
-        }
-    }
-}
-
-/**
- * Cleanup browser resources
- */
-async function cleanupBrowser(browser, context, log) {
-    try {
-        if (context) {
-            log('Closing browser context...');
-            await context.close();
-        }
-        if (browser) {
-            log('Closing browser...');
-            await browser.close();
-            log('Browser closed successfully');
-        }
-    } catch (error) {
-        log(`Error during cleanup: ${error.message}`, 'warning');
     }
 }
 
