@@ -60,11 +60,11 @@ class AutobotHandler {
      * Get new files that haven't been uploaded yet
      * Optimized for large folders with many already-uploaded files
      */
-    getNewFiles() {
+    getNewFiles(contentType) {
         try {
             const photoExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
             const videoExtensions = ['.mp4', '.mov', '.avi', '.mkv', '.webm'];
-            const extensions = this.config.contentType === 'Photo' ? photoExtensions : videoExtensions;
+            const extensions = contentType === 'Photo' ? photoExtensions : videoExtensions;
 
             // Read directory entries (faster than reading all files first)
             const entries = fs.readdirSync(this.config.folderPath, { withFileTypes: true });
@@ -137,12 +137,12 @@ class AutobotHandler {
     /**
      * Check for new files and upload them
      */
-    async checkAndUpload() {
+    async checkAndUpload(contentType) {
         if (!this.isRunning) return;
 
         this.log('Checking for new files...', 'info');
 
-        const newFiles = this.getNewFiles();
+        const newFiles = this.getNewFiles(contentType);
 
         if (newFiles.length === 0) {
             this.log('No new files to upload', 'info');
@@ -157,8 +157,8 @@ class AutobotHandler {
             password: this.config.password,
             folderPath: this.config.folderPath,
             filesToUpload: newFiles,
-            contentType: this.config.contentType,
-            harga: this.config.price,
+            contentType: contentType,
+            harga: contentType === 'Photo' ? this.config.pricePhoto : this.config.priceVideo,
             deskripsi: this.config.description,
             fototree: this.config.fototree,
             batchSize: this.maxFilesPerCheck,
@@ -203,11 +203,13 @@ class AutobotHandler {
         this.log(`Monitoring folder: ${config.folderPath}`, 'info');
 
         // Do initial check immediately
-        await this.checkAndUpload();
+        await this.checkAndUpload('Photo');
+        await this.checkAndUpload('Video');
 
         // Set up interval for periodic checks
         this.intervalId = setInterval(async () => {
-            await this.checkAndUpload();
+            await this.checkAndUpload('Photo');
+            await this.checkAndUpload('Video');
         }, this.checkInterval);
 
         return { success: true, message: 'Autobot started successfully' };

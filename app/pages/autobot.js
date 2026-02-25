@@ -50,18 +50,22 @@ function getAutobotPageTemplate() {
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
                         <div class="ant-form-item">
-                            <label class="ant-form-item-label">Content Type</label>
-                            <select id="autobot-content-type" class="ant-input" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 14px;">
-                                <option value="Photo">Photo</option>
-                                <option value="Video">Video</option>
-                            </select>
+                            <label class="ant-form-item-label">Harga Foto<span style="color: #e53e3e;">*</span></label>
+                            <input 
+                                type="number" 
+                                id="autobot-price-photo" 
+                                class="ant-input" 
+                                placeholder="Enter price"
+                                value="${customer.price || ''}"
+                                required
+                            >
                         </div>
 
                         <div class="ant-form-item">
-                            <label class="ant-form-item-label">Harga <span style="color: #e53e3e;">*</span></label>
+                            <label class="ant-form-item-label">Harga Video<span style="color: #e53e3e;">*</span></label>
                             <input 
                                 type="number" 
-                                id="autobot-price" 
+                                id="autobot-price-video" 
                                 class="ant-input" 
                                 placeholder="Enter price"
                                 value="${customer.price || ''}"
@@ -217,9 +221,9 @@ function initAutobotPage(router) {
             // Validate inputs
             const customer = JSON.parse(localStorage.getItem('customer') || '{}');
             const password = document.getElementById('autobot-password').value.trim();
-            const price = document.getElementById('autobot-price').value.trim();
+            const pricePhoto = document.getElementById('autobot-price-photo').value.trim();
+            const priceVideo = document.getElementById('autobot-price-video').value.trim();
             const fototree = document.getElementById('autobot-fototree').value.trim();
-            const contentType = document.getElementById('autobot-content-type').value;
             const description = document.getElementById('autobot-description').value.trim();
 
             if (!selectedFolder) {
@@ -232,8 +236,13 @@ function initAutobotPage(router) {
                 return;
             }
 
-            if (!price) {
-                showMessage('Please enter the price (harga)', 'error');
+            if (!pricePhoto) {
+                showMessage('Please enter the Photo price (harga)', 'error');
+                return;
+            }
+
+            if (!priceVideo) {
+                showMessage('Please enter the Video price (harga)', 'error');
                 return;
             }
 
@@ -247,8 +256,8 @@ function initAutobotPage(router) {
                 username: customer.username,
                 password: password,
                 folderPath: selectedFolder,
-                contentType: contentType,
-                price: parseInt(price, 10),
+                pricePhoto: parseInt(pricePhoto, 10),
+                priceVideo: parseInt(priceVideo, 10),
                 description: description,
                 fototree: fototree
             };
