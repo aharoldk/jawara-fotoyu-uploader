@@ -3,6 +3,8 @@
  * This header is consistent across all pages with navigation menu
  */
 
+const { apiFetch, setRouter } = require('../utils/apiFetch');
+
 function getSharedHeader(currentPage = 'upload') {
     const customer = JSON.parse(localStorage.getItem('customer') || '{}');
     const version = require('../package.json').version;
@@ -44,11 +46,11 @@ function getSharedHeader(currentPage = 'upload') {
                             <span>Autobot</span>
                         </button>
                         ` : ''}
-                        <button class="dropdown-item" id="setup-modal-btn">
+                        <button class="dropdown-item ${currentPage === 'setup' ? 'active' : ''}" data-route="setup">
                             <span class="icon">🎭</span>
                             <span>Setup</span>
                         </button>
-                        <button class="dropdown-item" id="profile-modal-btn">
+                        <button class="dropdown-item ${currentPage === 'profile' ? 'active' : ''}" data-route="profile">
                             <span class="icon">👤</span>
                             <span>Profile</span>
                         </button>
@@ -68,6 +70,7 @@ function getSharedHeader(currentPage = 'upload') {
  * @param {Object} router - The router object
  */
 function initSharedHeader(router) {
+    setRouter(router);
     // Dropdown toggle
     const menuToggle = document.getElementById('menu-toggle');
     const dropdownMenu = document.getElementById('dropdown-menu');
@@ -120,12 +123,8 @@ function initSharedHeader(router) {
 
                 // Call logout endpoint
                 if (token) {
-                    await fetch(`${API_URL}/customers/logout`, {
+                    await apiFetch(`${API_URL}/customers/logout`, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        }
                     });
                 }
             } catch (error) {
