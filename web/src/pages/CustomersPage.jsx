@@ -322,6 +322,44 @@ const CustomersPage = () => {
                         <Input placeholder="Enter WhatsApp number" />
                     </Form.Item>
 
+                    <Form.Item name="pricePhoto" label="Price Photo">
+                        <InputNumber
+                            style={{ width: '100%' }}
+                            placeholder="Enter photo price"
+                            min={0}
+                            formatter={(value) =>
+                                `Rp ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                            }
+                            parser={(value) => value.replace(/Rp\s?|(,*)/g, '')}
+                        />
+                    </Form.Item>
+
+                    <Form.Item name="priceVideo" label="Price Video">
+                        <InputNumber
+                            style={{ width: '100%' }}
+                            placeholder="Enter video price"
+                            min={0}
+                            formatter={(value) =>
+                                `Rp ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                            }
+                            parser={(value) => value.replace(/Rp\s?|(,*)/g, '')}
+                        />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="concurrentBot"
+                        label="Concurrent Bot"
+                        tooltip="Number of browser bots to use for concurrent uploads (1-100)"
+                    >
+                        <InputNumber
+                            style={{ width: '100%' }}
+                            placeholder="Enter concurrent bot (1-100)"
+                            min={1}
+                            max={100}
+                            defaultValue={1}
+                        />
+                    </Form.Item>
+
                     <Form.Item
                         name="subscriptionType"
                         label="Subscription Type"
