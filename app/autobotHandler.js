@@ -162,7 +162,7 @@ class AutobotHandler {
             deskripsi: this.config.description,
             fototree: this.config.fototree,
             batchSize: this.maxFilesPerCheck,
-            concurrentTabs: 1
+            concurrentBot: 1
         };
 
         try {

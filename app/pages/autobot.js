@@ -3,6 +3,7 @@
  */
 const { getSharedHeader } = require('../components/sharedHeader');
 const { initSharedHeader } = require('../components/sharedHeader');
+const { apiFetch, setRouter, validateSession } = require('../utils/apiFetch');
 const API_URL = process.env.API_URL;
 
 let searchTimeout = null;
@@ -56,7 +57,7 @@ function getAutobotPageTemplate() {
                                 id="autobot-price-photo" 
                                 class="ant-input" 
                                 placeholder="Enter price"
-                                value="${customer.price || ''}"
+                                value="${customer.pricePhoto || ''}"
                                 required
                             >
                         </div>
@@ -68,7 +69,7 @@ function getAutobotPageTemplate() {
                                 id="autobot-price-video" 
                                 class="ant-input" 
                                 placeholder="Enter price"
-                                value="${customer.price || ''}"
+                                value="${customer.priceVideo || ''}"
                                 required
                             >
                         </div>
@@ -127,6 +128,7 @@ function getAutobotPageTemplate() {
 
 function initAutobotPage(router) {
     // Initialize shared header navigation
+    setRouter(router);
     initSharedHeader(router);
 
     const { ipcRenderer } = require('electron');
@@ -218,6 +220,13 @@ function initAutobotPage(router) {
 
     if (startBtn) {
         startBtn.addEventListener('click', async () => {
+            // Validate session first
+            const isValid = await validateSession();
+            if (!isValid) {
+                showMessage('Your session has expired. Please login again.', 'error');
+                return;
+            }
+
             // Validate inputs
             const customer = JSON.parse(localStorage.getItem('customer') || '{}');
             const password = document.getElementById('autobot-password').value.trim();
@@ -313,12 +322,7 @@ function initAutobotPage(router) {
         const resultsDiv = document.getElementById('autobot-fototree-results');
 
         try {
-            const response = await fetch(`${API_URL}/customers/fototree/search?q=${encodeURIComponent(searchTerm)}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
+        const response = await apiFetch(`${API_URL}/customers/fototree/search?q=${encodeURIComponent(searchTerm)}`);
 
             if (!response.ok) {
                 throw new Error('Failed to fetch FotoTree results');
