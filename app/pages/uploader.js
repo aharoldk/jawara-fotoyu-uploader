@@ -65,12 +65,12 @@ function getUploadFormTemplate(customer) {
                     </div>
 
                     <div class="ant-form-item">
-                        <label class="ant-form-item-label">Concurrent Tabs <span style="color: #a0aec0; font-size: 12px;">(1-100, parallel uploads)</span></label>
+                        <label class="ant-form-item-label">Concurrent Bot <span style="color: #a0aec0; font-size: 12px;">(1-100, parallel uploads)</span></label>
                         <input 
                             type="number" 
-                            id="concurrentTabs" 
+                            id="concurrentBot" 
                             class="ant-input" 
-                            value="${customer.concurrentTabs || 1}" 
+                            value="${customer.concurrentBot || 1}" 
                             min="1" 
                             max="100"
                         >
@@ -97,7 +97,7 @@ function getUploadFormTemplate(customer) {
                             id="harga" 
                             class="ant-input" 
                             placeholder="Enter harga" 
-                            value="${customer.price || ''}" 
+                            value="${customer.pricePhoto || ''}" 
                             required
                         >
                     </div>

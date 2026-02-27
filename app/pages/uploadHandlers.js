@@ -4,6 +4,7 @@
 
 const API_URL = process.env.API_URL;
 const { initSharedHeader } = require('../components/sharedHeader');
+const { apiFetch, setRouter, validateSession } = require('../utils/apiFetch');
 
 const dashboardState = {
     selectedFolder: null,
@@ -12,6 +13,7 @@ const dashboardState = {
 };
 
 function initDashboardPage(router) {
+    setRouter(router);
     dashboardState.selectedFolder = null;
     dashboardState.searchTimeout = null;
     dashboardState.uploadCancelled = false;
@@ -32,6 +34,18 @@ function initDashboardPage(router) {
 
 function initEventListeners(router) {
 
+
+    // Content type change → update harga from the correct price field
+    const contentTypeSelect = document.getElementById('contentType');
+    const hargaInput = document.getElementById('harga');
+    if (contentTypeSelect && hargaInput) {
+        contentTypeSelect.addEventListener('change', () => {
+            const customer = JSON.parse(localStorage.getItem('customer') || '{}');
+            hargaInput.value = contentTypeSelect.value === 'Video'
+                ? (customer.priceVideo || '')
+                : (customer.pricePhoto || '');
+        });
+    }
 
     // Password toggle
     const togglePasswordBtn = document.getElementById('toggle-password');
@@ -127,11 +141,15 @@ async function selectFolder() {
 async function startUpload(router) {
     const contentType = document.getElementById('contentType').value;
     const batchSize = parseInt(document.getElementById('batchSize').value) || 10;
-    const concurrentTabs = parseInt(document.getElementById('concurrentTabs').value) || 1;
+    const concurrentBot = parseInt(document.getElementById('concurrentBot').value) || 1;
     const harga = document.getElementById('harga').value;
     const deskripsi = document.getElementById('deskripsi').value;
     const fototree = document.getElementById('fototree').value;
     const fotoyuPassword = document.getElementById('password-fotoyu').value;
+    const customer = JSON.parse(localStorage.getItem('customer') || '{}');
+
+    // Use the correct price field based on content type
+    const resolvedHarga = harga || (contentType === 'Video' ? customer.priceVideo : customer.pricePhoto);
 
     dashboardState.uploadCancelled = false;
 
@@ -147,7 +165,7 @@ async function startUpload(router) {
     }
 
     // Validation
-    if (!harga) {
+    if (!resolvedHarga) {
         logMessage('Error: Harga is required', 'error');
         alert('Please enter Harga');
         return;
@@ -172,9 +190,9 @@ async function startUpload(router) {
         return;
     }
 
-    if (concurrentTabs < 1 || concurrentTabs > 100) {
-        logMessage('Error: Concurrent Tabs must be between 1 and 100', 'error');
-        alert('Concurrent Tabs must be between 1 and 100');
+    if (concurrentBot < 1 || concurrentBot > 100) {
+        logMessage('Error: Concurrent Bot must be between 1 and 100', 'error');
+        alert('Concurrent Bot must be between 1 and 100');
         return;
     }
 
@@ -197,11 +215,9 @@ async function startUpload(router) {
         return;
     }
 
-    const customer = JSON.parse(localStorage.getItem('customer') || '{}');
-
     logMessage(`Starting upload bot...`);
-    logMessage(`Content Type: ${contentType}, Harga: ${harga}, Batch Size: ${batchSize}, Concurrent Tabs: ${concurrentTabs}`);
-    logMessage(`Using ${concurrentTabs} tab(s) for parallel uploads`, 'info');
+    logMessage(`Content Type: ${contentType}, Harga: ${resolvedHarga}, Batch Size: ${batchSize}, Concurrent Bot: ${concurrentBot}`);
+    logMessage(`Using ${concurrentBot} bot(s) for parallel uploads`, 'info');
 
     const startBtn = document.getElementById('startBtn');
     const stopBtn = document.getElementById('stopBtn');
@@ -225,10 +241,10 @@ async function startUpload(router) {
             contentType: contentType,
             folderPath: dashboardState.selectedFolder,
             batchSize: batchSize,
-            harga: harga,
+            harga: resolvedHarga,
             deskripsi: deskripsi,
             fototree: fototree,
-            concurrentTabs: concurrentTabs
+            concurrentBot: concurrentBot
         });
 
         if (dashboardState.uploadCancelled || result.cancelled) {
@@ -336,6 +352,7 @@ async function searchFotoTree(query) {
 }
 
 // ============================================================================
+// ============================================================================
 // UTILITIES
 // ============================================================================
 
@@ -344,11 +361,8 @@ async function logout(router) {
 
     if (token) {
         try {
-            await fetch(`${API_URL}/customers/logout`, {
+            await apiFetch(`${API_URL}/customers/logout`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
             });
         } catch (error) {
             console.error('Logout error:', error);
@@ -358,43 +372,6 @@ async function logout(router) {
     localStorage.removeItem('token');
     localStorage.removeItem('customer');
     router.navigate('login');
-}
-
-async function validateSession() {
-    const token = localStorage.getItem('token');
-    if (!token) return false;
-
-    try {
-        const response = await fetch(`${API_URL}/customers/validate-session`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-        });
-
-        const data = await response.json();
-
-        if (!data.valid) {
-            console.log('Session invalid:', data.message);
-            localStorage.removeItem('token');
-            localStorage.removeItem('customer');
-
-            if (data.code === 'SESSION_EXPIRED') {
-                setTimeout(() => {
-                    alert('Your session has expired or been terminated. Please login again.');
-                }, 100);
-            }
-            return false;
-        }
-
-        return true;
-    } catch (error) {
-        console.error('Session validation error:', error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('customer');
-        return false;
-    }
 }
 
 function logMessage(message, type = 'info') {
@@ -410,10 +387,6 @@ function logMessage(message, type = 'info') {
     logsDiv.appendChild(logEntry);
     logsDiv.scrollTop = logsDiv.scrollHeight;
 }
-
-// ============================================================================
-// EXPORTS
-// ============================================================================
 
 module.exports = {
     initDashboardPage,
