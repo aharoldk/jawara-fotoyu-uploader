@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.0.1](https://github.com/aharoldk/jawara-fotoyu-uploader/compare/v2.0.0...v2.0.1) (2026-02-27)
+
+
+### Features
+
+* add price fields for Photo and Video content types and concurrent bot setting ([b2af8dc](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/b2af8dc4d6675a74b3eb5f84e01035f3034546d2))
+* add pricing fields for Photo and Video content types and concurrent bot setting ([7799f2d](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/7799f2d87a18d6045129bd89f3291b9a03d93f77))
+* add profile settings page with form for user preferences and validation ([56e5ebf](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/56e5ebf24f840a45a7e15296bedd8ad6ecc8cda4))
+* clean up invalidateSessionModal.js by removing unused template comments ([f92b236](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/f92b236e56a9fef0a5938258457e0a239675c3dc))
+* implement apiFetch utility for handling API requests and session validation ([095eea1](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/095eea1ccbfbc409322b7af1020eba7d15967cfb))
+* implement retry strategies for navigation and login processes to enhance reliability ([eab39b1](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/eab39b1a4587106a62488515fbbeb6b5d50a36ad))
+* refactor password handling in customer update process ([6df6bef](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/6df6befb1ec94a8d70815d6a63eca6e2b9265381))
+* refactor setup modal to setup page with improved layout and functionality ([1146db0](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/1146db0b8595cbf5391a98f922d52e28f5543c54))
+* rename Autobot to Alfred and update setup page to documentation with enhanced content ([5dc7092](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/5dc7092e43136aa6cbfbbdb22fecb8f545a98190))
+* rename concurrentTabs to concurrentBot and update price handling for uploads ([37f0c5d](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/37f0c5d5d8b70efd07e1bf3433767de034131b4d))
+* rename concurrentTabs to concurrentBot for clarity in bot.js ([9f4cfa4](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/9f4cfa42d7e095c2e564787dec8ea85f945b1371))
+* update autobot to handle separate pricing for Photo and Video content types ([61c308f](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/61c308f10a507b2b1695b9b01c151427d12ed2f0))
+* update Autobot's name to Alfred for improved user engagement ([bf01e0c](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/bf01e0c0040c436a9c345d4f535281feb85e4045))
+* update concurrentTabs to concurrentBot and enhance price handling for Photo and Video ([e3f00b3](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/e3f00b330762ca25f75049122b16a15068f7e3f3))
+* update customer model to support separate pricing for Photo and Video content types ([6c1c192](https://github.com/aharoldk/jawara-fotoyu-uploader/commit/6c1c192bf2bc67866492ff084a10ceacc20a7b72))
+
 ## [2.0.0](https://github.com/aharoldk/jawara-fotoyu-uploader/compare/v1.5.0...v2.0.0) (2026-02-25)
 
 
