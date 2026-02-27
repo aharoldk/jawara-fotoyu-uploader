@@ -1,21 +1,8 @@
-/* ===========================================================================
-   FOTOYU BOT UPLOADER - Main Application (Refactored)
-   ===========================================================================
-   Clean, modular structure with separated concerns
-   =========================================================================== */
-
-// ============================================================================
-// IMPORTS
-// ============================================================================
-
 const { getLoginPageTemplate, initLoginPage } = require('./pages/login');
 const { getDashboardPageTemplate } = require('./pages/uploader');
 const { initDashboardPage, logMessage } = require('./pages/uploadHandlers');
 const { getAutobotPageTemplate, initAutobotPage } = require('./pages/autobot');
-const { getProfileModalTemplate, openProfileModal } = require('./modals/profileModal');
-const { getSetupModalTemplate, openSetupModal } = require('./modals/setupModal');
-
-const API_URL = process.env.API_URL;
+const { getProfilePageTemplate, initProfilePage } = require('./pages/profile');
 
 /**
  * Copy text to clipboard with visual feedback
@@ -94,17 +81,16 @@ const router = {
 
             // Render autobot page
             app.innerHTML = getAutobotPageTemplate();
-
-            // Inject modals into modal container
-            const modalContainer = document.getElementById('modal-container');
-            if (modalContainer) {
-                modalContainer.innerHTML = getProfileModalTemplate() + getSetupModalTemplate();
-            }
-
             initAutobotPage(this);
 
-            // Setup modal button handlers for header buttons
-            this.initModalButtons();
+        } else if (this.currentRoute === 'profile') {
+            if (!this.checkAuth()) {
+                this.navigate('login');
+                return;
+            }
+
+            app.innerHTML = getProfilePageTemplate();
+            initProfilePage(this);
 
         } else if (this.currentRoute === 'upload') {
             if (!this.checkAuth()) {
@@ -114,71 +100,9 @@ const router = {
 
             // Render dashboard
             app.innerHTML = getDashboardPageTemplate();
-
-            // Inject modals into modal container
-            const modalContainer = document.getElementById('modal-container');
-            if (modalContainer) {
-                modalContainer.innerHTML = getProfileModalTemplate() + getSetupModalTemplate();
-            }
-
-            // Initialize dashboard handlers
             initDashboardPage(this);
-
-            // Setup modal button handlers
-            this.initModalButtons();
         }
     },
-
-    initModalButtons() {
-        // Profile modal
-        const profileBtn = document.getElementById('profile-modal-btn');
-        if (profileBtn) {
-            profileBtn.addEventListener('click', () => {
-                openProfileModal(this);
-            });
-        }
-
-        // Setup/Playwright modal
-        const playwrightInfoBtn = document.getElementById('setup-modal-btn');
-        if (playwrightInfoBtn) {
-            playwrightInfoBtn.addEventListener('click', () => {
-                openSetupModal();
-            });
-        }
-    },
-
-    async validateSession() {
-        const token = localStorage.getItem('token');
-        if (!token) return;
-
-        try {
-            const response = await fetch(`${API_URL}/customers/validate-session`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            const data = await response.json();
-
-            if (!data.valid) {
-                console.log('Session invalid:', data.message);
-                localStorage.removeItem('token');
-                localStorage.removeItem('customer');
-
-                if (data.code === 'SESSION_EXPIRED') {
-                    setTimeout(() => {
-                        alert('Your session has expired or been terminated. Please login again.');
-                    }, 100);
-                }
-            }
-        } catch (error) {
-            console.error('Session validation error:', error);
-            localStorage.removeItem('token');
-            localStorage.removeItem('customer');
-        }
-    }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
