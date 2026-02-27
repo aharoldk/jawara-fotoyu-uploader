@@ -3,6 +3,7 @@ const { getDashboardPageTemplate } = require('./pages/uploader');
 const { initDashboardPage, logMessage } = require('./pages/uploadHandlers');
 const { getAutobotPageTemplate, initAutobotPage } = require('./pages/autobot');
 const { getProfilePageTemplate, initProfilePage } = require('./pages/profile');
+const { getSetupPageTemplate, initSetupPage } = require('./pages/setup');
 
 /**
  * Copy text to clipboard with visual feedback
@@ -91,6 +92,15 @@ const router = {
 
             app.innerHTML = getProfilePageTemplate();
             initProfilePage(this);
+
+        } else if (this.currentRoute === 'setup') {
+            if (!this.checkAuth()) {
+                this.navigate('login');
+                return;
+            }
+
+            app.innerHTML = getSetupPageTemplate();
+            initSetupPage(this);
 
         } else if (this.currentRoute === 'upload') {
             if (!this.checkAuth()) {

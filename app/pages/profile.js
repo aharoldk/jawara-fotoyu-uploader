@@ -2,7 +2,6 @@
  * Profile Settings Page
  */
 const { getSharedHeader, initSharedHeader } = require('../components/sharedHeader');
-const { getSetupModalTemplate, openSetupModal } = require('../modals/setupModal');
 const { apiFetch, setRouter, validateSession } = require('../utils/apiFetch');
 
 const API_URL = process.env.API_URL;
@@ -107,17 +106,8 @@ function getProfilePageTemplate() {
                     </form>
                 </div>
             </div>
-
-            <div id="modal-container">
-                ${getSetupModalTemplate()}
-            </div>
-        </div>
     `;
 }
-
-// ============================================================================
-// HANDLERS
-// ============================================================================
 
 async function searchFotoTree(query) {
     const resultsDiv = document.getElementById('profile-fototree-results');
@@ -236,9 +226,6 @@ function initProfilePage(router) {
     setRouter(router);
     initSharedHeader(router);
 
-    // Setup modal
-    const setupBtn = document.getElementById('setup-modal-btn');
-    if (setupBtn) setupBtn.addEventListener('click', () => openSetupModal());
 
     // Password visibility toggles
     [['toggle-new-password', 'profile-new-password'], ['toggle-confirm-password', 'profile-confirm-password']].forEach(([btnId, inputId]) => {

@@ -1,22 +1,26 @@
 /**
- * Setup & Help Modal - Combined Installation Guide and User Help
+ * Setup & Help Page
  */
-function getSetupModalTemplate() {
+const { getSharedHeader, initSharedHeader } = require('../components/sharedHeader');
+
+function getSetupPageTemplate() {
     return `
-        <div id="playwright-info-modal" class="modal" style="display: none; z-index: 10000;">
-            <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto; z-index: 10001; position: relative;">
-                <div class="modal-header">
-                    <h2 style="display: flex; align-items: center; gap: 10px; margin: 0;">
-                        <span>🎭</span>
-                        <span>Setup & Help Guide</span>
-                    </h2>
-                    <button class="modal-close" id="close-playwright-modal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    
+        <div class="autobot-page">
+            ${getSharedHeader('setup')}
+
+            <div class="container">
+                <div class="panel">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+                        <span style="font-size: 32px;">🎭</span>
+                        <div>
+                            <h3 style="margin: 0;">Setup & Help Guide</h3>
+                            <p style="margin: 4px 0 0 0; color: #718096; font-size: 14px;">Installation guide and how to use the app</p>
+                        </div>
+                    </div>
+
                     <!-- Tabs -->
                     <div style="display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0;">
-                        <button class="tab-btn active" data-tab="help" style="padding: 12px 24px; background: none; border: none; cursor: pointer; font-size: 15px; font-weight: 600; color: #718096; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s;">
+                        <button class="tab-btn active" data-tab="help" style="padding: 12px 24px; background: none; border: none; cursor: pointer; font-size: 15px; font-weight: 600; color: #667eea; border-bottom: 3px solid #667eea; margin-bottom: -2px; transition: all 0.2s;">
                             📚 How to Use
                         </button>
                         <button class="tab-btn" data-tab="setup" style="padding: 12px 24px; background: none; border: none; cursor: pointer; font-size: 15px; font-weight: 600; color: #718096; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s;">
@@ -33,7 +37,6 @@ function getSetupModalTemplate() {
                     <div id="setup-tab" class="tab-content" style="display: none;">
                         ${getSetupContent()}
                     </div>
-
                 </div>
             </div>
         </div>
@@ -59,7 +62,7 @@ function getHelpContent() {
             <h3 style="color: #2d3748; margin-bottom: 16px; font-size: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
                 📝 Field Explanations
             </h3>
-            
+
             <div style="display: grid; gap: 12px;">
                 <div style="background: #f7fafc; padding: 14px; border-radius: 6px; border-left: 3px solid #e53e3e;">
                     <div style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 14px;">🔐 Password Fotoyu <span style="background: #e53e3e; color: white; padding: 1px 6px; border-radius: 3px; font-size: 10px; margin-left: 6px;">REQUIRED</span></div>
@@ -72,8 +75,8 @@ function getHelpContent() {
                 </div>
 
                 <div style="background: #f7fafc; padding: 14px; border-radius: 6px; border-left: 3px solid #48bb78;">
-                    <div style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 14px;">⚡ Concurrent Tabs (1-10)</div>
-                    <div style="color: #4a5568; font-size: 13px; line-height: 1.5;">Number of browser tabs for parallel uploads. <strong>Tip:</strong> Start with 1-2 tabs.</div>
+                    <div style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 14px;">⚡ Concurrent Bot (1-100)</div>
+                    <div style="color: #4a5568; font-size: 13px; line-height: 1.5;">Number of browser bots for parallel uploads. <strong>Tip:</strong> Start with 1-2 bots.</div>
                 </div>
 
                 <div style="background: #f7fafc; padding: 14px; border-radius: 6px; border-left: 3px solid #ed8936;">
@@ -91,19 +94,19 @@ function getHelpContent() {
         <!-- Tips -->
         <div style="margin-bottom: 16px;">
             <h3 style="color: #2d3748; margin-bottom: 16px; font-size: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">💡 Tips & Best Practices</h3>
-            
+
             <div style="display: grid; gap: 10px;">
                 <div style="background: #edf2f7; padding: 12px; border-radius: 6px; border-left: 3px solid #48bb78;">
-                    <div style="color: #2d3748; font-size: 13px;"><strong>✓ For Photos:</strong> Use batch size 10-50 and 2-3 concurrent tabs for optimal speed</div>
+                    <div style="color: #2d3748; font-size: 13px;"><strong>✓ For Photos:</strong> Use batch size 10-50 and 2-3 concurrent bots for optimal speed</div>
                 </div>
                 <div style="background: #edf2f7; padding: 12px; border-radius: 6px; border-left: 3px solid #48bb78;">
-                    <div style="color: #2d3748; font-size: 13px;"><strong>✓ For Videos:</strong> Use batch size 5-10 and 1-2 concurrent tabs</div>
+                    <div style="color: #2d3748; font-size: 13px;"><strong>✓ For Videos:</strong> Use batch size 5-10 and 1-2 concurrent bots</div>
                 </div>
                 <div style="background: #edf2f7; padding: 12px; border-radius: 6px; border-left: 3px solid #48bb78;">
-                    <div style="color: #2d3748; font-size: 13px;"><strong>✓ Save Settings:</strong> Use <strong>Profile</strong> button to save your common settings</div>
+                    <div style="color: #2d3748; font-size: 13px;"><strong>✓ Save Settings:</strong> Use <strong>Profile</strong> to save your common settings</div>
                 </div>
                 <div style="background: #fff3cd; padding: 12px; border-radius: 6px; border-left: 3px solid #ed8936;">
-                    <div style="color: #2d3748; font-size: 13px;"><strong>⚠️ Performance:</strong> More tabs = faster but more CPU/memory usage</div>
+                    <div style="color: #2d3748; font-size: 13px;"><strong>⚠️ Performance:</strong> More bots = faster but more CPU/memory usage</div>
                 </div>
             </div>
         </div>
@@ -181,21 +184,15 @@ function getSetupContent() {
     `;
 }
 
-function openSetupModal() {
-    const modal = document.getElementById('playwright-info-modal');
-    const closeBtn = document.getElementById('close-playwright-modal');
+function initSetupPage(router) {
+    initSharedHeader(router);
 
-    modal.style.display = 'flex';
-
-    // Setup tab switching
-    const tabButtons = modal.querySelectorAll('.tab-btn');
-    const tabContents = modal.querySelectorAll('.tab-content');
-
+    // Tab switching
+    const tabButtons = document.querySelectorAll('.tab-btn');
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
             const tabName = button.getAttribute('data-tab');
-            
-            // Update active tab button
+
             tabButtons.forEach(btn => {
                 btn.classList.remove('active');
                 btn.style.color = '#718096';
@@ -205,38 +202,13 @@ function openSetupModal() {
             button.style.color = '#667eea';
             button.style.borderBottomColor = '#667eea';
 
-            // Show active tab content
-            tabContents.forEach(content => {
+            document.querySelectorAll('.tab-content').forEach(content => {
                 content.style.display = 'none';
             });
             document.getElementById(`${tabName}-tab`).style.display = 'block';
         });
     });
-
-    // Set initial active tab style
-    const activeTab = modal.querySelector('.tab-btn.active');
-    if (activeTab) {
-        activeTab.style.color = '#667eea';
-        activeTab.style.borderBottomColor = '#667eea';
-    }
-
-    // Close modal handler
-    const closeModal = () => {
-        modal.style.display = 'none';
-    };
-
-    closeBtn.onclick = closeModal;
-
-    // Close when clicking outside
-    window.onclick = function(e) {
-        if (e.target === modal) {
-            closeModal();
-        }
-    };
 }
 
-module.exports = {
-    getSetupModalTemplate,
-    openSetupModal
-};
+module.exports = { getSetupPageTemplate, initSetupPage };
 
