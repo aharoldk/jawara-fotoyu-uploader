@@ -1,12 +1,7 @@
 /**
  * Invalidate Session Modal - Force logout other users
  */
-
 const API_URL = process.env.API_URL;
-
-// ============================================================================
-// TEMPLATE
-// ============================================================================
 
 function getInvalidateSessionModalTemplate() {
     return `
