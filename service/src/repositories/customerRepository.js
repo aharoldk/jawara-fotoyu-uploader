@@ -20,7 +20,6 @@ async function createCustomer(customerData) {
 }
 
 async function updateCustomer(id, customerData) {
-    // Hash password if provided and not empty
     if (customerData.password && customerData.password.trim() !== '') {
         customerData.password = await hashPassword(customerData.password);
     } else {
@@ -28,7 +27,7 @@ async function updateCustomer(id, customerData) {
         delete customerData.password;
     }
 
-    return await Customer.findByIdAndUpdate(
+    return Customer.findByIdAndUpdate(
         id,
         customerData,
         { new: true, runValidators: true }
@@ -36,7 +35,7 @@ async function updateCustomer(id, customerData) {
 }
 
 async function deleteCustomer(id) {
-    return await Customer.findByIdAndDelete(id);
+    return Customer.findByIdAndDelete(id);
 }
 
 async function findAllCustomers() {
@@ -51,7 +50,7 @@ async function updateSubscription(id, subscriptionType, subscriptionExpiredAt) {
         updateData.subscriptionType = subscriptionType;
     }
 
-    return await Customer.findByIdAndUpdate(
+    return Customer.findByIdAndUpdate(
         id,
         updateData,
         { new: true }

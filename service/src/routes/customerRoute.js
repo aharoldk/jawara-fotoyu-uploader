@@ -120,12 +120,8 @@ async function updateOwnProfile(request, h) {
         fotoTree: request.payload.fotoTree,
         concurrentBot: request.payload.concurrentBot,
         batchSize: request.payload.batchSize,
+        password: request.payload.password
     };
-
-    // Handle password update separately if provided
-    if (request.payload.password) {
-        allowedUpdates.password = await hashPassword(request.payload.password);
-    }
 
     const customer = await updateCustomer(customerId, allowedUpdates);
 
@@ -206,6 +202,7 @@ const updateCustomerValidation = Joi.object({
     priceVideo: Joi.number().min(0).allow(null).optional(),
     description: Joi.string().allow('', null).optional(),
     fotoTree: Joi.string().allow('', null).optional(),
+    password: Joi.string().allow('', null).optional(),
     concurrentBot: Joi.number().integer().min(1).max(1000).optional(),
     batchSize: Joi.number().integer().min(10).max(2000).optional(),
     subscriptionType: Joi.string().valid('Normal', 'Pro').optional(),
