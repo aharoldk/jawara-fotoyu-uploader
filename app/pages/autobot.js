@@ -20,7 +20,7 @@ function getAutobotPageTemplate() {
                     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
                         <span style="font-size: 32px;">🤖</span>
                         <div>
-                            <h3>Hi, I'm Autobot. I'll do your boring work while you busy 💼</h3>
+                            <h3>Hi, I'm Alfred. I'll do your boring work while you busy 💼</h3>
                             <p style="margin: 4px 0 0 0; color: #718096; font-size: 14px;">Because manually uploading 2000 photos is totally fun... said no one ever</p>
                         </div>
                     </div>
