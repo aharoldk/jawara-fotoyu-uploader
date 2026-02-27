@@ -43,12 +43,12 @@ function getSharedHeader(currentPage = 'upload') {
                         ${isProUser ? `
                         <button class="dropdown-item ${currentPage === 'autobot' ? 'active' : ''}" data-route="autobot">
                             <span class="icon">🤖</span>
-                            <span>Autobot</span>
+                            <span>Alfred</span>
                         </button>
                         ` : ''}
-                        <button class="dropdown-item ${currentPage === 'setup' ? 'active' : ''}" data-route="setup">
-                            <span class="icon">🎭</span>
-                            <span>Setup</span>
+                        <button class="dropdown-item ${currentPage === 'documentation' ? 'active' : ''}" data-route="documentation">
+                            <span class="icon">📖</span>
+                            <span>Documentation</span>
                         </button>
                         <button class="dropdown-item ${currentPage === 'profile' ? 'active' : ''}" data-route="profile">
                             <span class="icon">👤</span>

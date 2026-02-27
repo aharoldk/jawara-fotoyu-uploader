@@ -6,15 +6,15 @@ const { getSharedHeader, initSharedHeader } = require('../components/sharedHeade
 function getSetupPageTemplate() {
     return `
         <div class="autobot-page">
-            ${getSharedHeader('setup')}
+            ${getSharedHeader('documentation')}
 
             <div class="container">
                 <div class="panel">
                     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
                         <span style="font-size: 32px;">🎭</span>
                         <div>
-                            <h3 style="margin: 0;">Setup & Help Guide</h3>
-                            <p style="margin: 4px 0 0 0; color: #718096; font-size: 14px;">Installation guide and how to use the app</p>
+                        <h3 style="margin: 0;">Documentation</h3>
+                        <p style="margin: 4px 0 0 0; color: #718096; font-size: 14px;">Learn how to use the app and set up your environment</p>
                         </div>
                     </div>
 
@@ -45,48 +45,105 @@ function getSetupPageTemplate() {
 
 function getHelpContent() {
     return `
-        <!-- Quick Start -->
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 8px; margin-bottom: 24px; color: white;">
-            <h3 style="margin: 0 0 12px 0; font-size: 18px;">⚡ Quick Start</h3>
-            <ol style="margin: 0; padding-left: 20px; line-height: 1.8;">
-                <li><strong>First Time?</strong> Click the <span style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px;">🎭 Playwright Setup</span> tab above to install browser automation</li>
-                <li>Enter your <strong>Fotoyu password</strong> (required for auto-login)</li>
-                <li><strong>Select folder</strong> containing your photos/videos</li>
-                <li>Fill in <strong>Price</strong> and <strong>FotoTree</strong> (required fields)</li>
-                <li>Click <strong>Start Upload</strong> and let the bot do the work!</li>
-            </ol>
-        </div>
+        <!-- Uploader Section -->
+        <div style="margin-bottom: 32px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
+                <span style="font-size: 24px;">📤</span>
+                <h3 style="margin: 0; color: #2d3748; font-size: 17px;">Uploader</h3>
+            </div>
+            <p style="color: #4a5568; font-size: 13px; margin-bottom: 16px; line-height: 1.6;">
+                It handles manual uploads. You pick a folder, configure the settings, hit Start — and It does the rest while you pretend to be busy.
+            </p>
 
-        <!-- Field Explanations -->
-        <div style="margin-bottom: 24px;">
-            <h3 style="color: #2d3748; margin-bottom: 16px; font-size: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
-                📝 Field Explanations
-            </h3>
-
-            <div style="display: grid; gap: 12px;">
-                <div style="background: #f7fafc; padding: 14px; border-radius: 6px; border-left: 3px solid #e53e3e;">
-                    <div style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 14px;">🔐 Password Fotoyu <span style="background: #e53e3e; color: white; padding: 1px 6px; border-radius: 3px; font-size: 10px; margin-left: 6px;">REQUIRED</span></div>
-                    <div style="color: #4a5568; font-size: 13px; line-height: 1.5;">Your Fotoyu account password. The bot uses this to login automatically. <strong>Note:</strong> Password is NOT stored.</div>
-                </div>
+            <div style="display: grid; gap: 10px;">
 
                 <div style="background: #f7fafc; padding: 14px; border-radius: 6px; border-left: 3px solid #4299e1;">
                     <div style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 14px;">📁 Select Folder</div>
-                    <div style="color: #4a5568; font-size: 13px; line-height: 1.5;">Choose the folder containing your photos or videos to upload.</div>
+                    <div style="color: #4a5568; font-size: 13px; line-height: 1.5;">Select the folder containing your photos or videos. It will scan and show you the count of photos, videos, and total files found.</div>
+                </div>
+
+                <div style="background: #f7fafc; padding: 14px; border-radius: 6px; border-left: 3px solid #e53e3e;">
+                    <div style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 14px;">🔐 Password Fotoyu <span style="background: #e53e3e; color: white; padding: 1px 6px; border-radius: 3px; font-size: 10px; margin-left: 6px;">REQUIRED</span></div>
+                    <div style="color: #4a5568; font-size: 13px; line-height: 1.5;">Your Fotoyu account password for auto-login. <strong>Not stored anywhere</strong> — only used during the upload session.</div>
+                </div>
+
+                <div style="background: #f7fafc; padding: 14px; border-radius: 6px; border-left: 3px solid #667eea;">
+                    <div style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 14px;">🎞️ Content Type</div>
+                    <div style="color: #4a5568; font-size: 13px; line-height: 1.5;">Choose <strong>Photo</strong> or <strong>Video</strong>. Switching this will automatically update the <em>Harga</em> field to your saved price for that content type (from Profile settings).</div>
                 </div>
 
                 <div style="background: #f7fafc; padding: 14px; border-radius: 6px; border-left: 3px solid #48bb78;">
-                    <div style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 14px;">⚡ Concurrent Bot (1-100)</div>
-                    <div style="color: #4a5568; font-size: 13px; line-height: 1.5;">Number of browser bots for parallel uploads. <strong>Tip:</strong> Start with 1-2 bots.</div>
+                    <div style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 14px;">⚡ Concurrent Bot (1–100)</div>
+                    <div style="color: #4a5568; font-size: 13px; line-height: 1.5;">Number of browser bots running in parallel. Each bot logs in independently and uploads its own batch. <strong>Recommended: 1–3 bots</strong> to avoid overloading your machine.</div>
                 </div>
 
                 <div style="background: #f7fafc; padding: 14px; border-radius: 6px; border-left: 3px solid #ed8936;">
-                    <div style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 14px;">📦 Batch Size (10-2000)</div>
-                    <div style="color: #4a5568; font-size: 13px; line-height: 1.5;"><strong>Recommended:</strong> 10-50 for photos, 5-10 for videos.</div>
+                    <div style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 14px;">📦 Batch Size (10–2000)</div>
+                    <div style="color: #4a5568; font-size: 13px; line-height: 1.5;">Number of files each bot processes per batch. <strong>Photos:</strong> 10–50 recommended. <strong>Videos:</strong> 5–10 recommended. Larger batches = fewer logins but more memory.</div>
+                </div>
+
+                <div style="background: #f7fafc; padding: 14px; border-radius: 6px; border-left: 3px solid #e53e3e;">
+                    <div style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 14px;">💰 Harga <span style="background: #e53e3e; color: white; padding: 1px 6px; border-radius: 3px; font-size: 10px; margin-left: 6px;">REQUIRED</span></div>
+                    <div style="color: #4a5568; font-size: 13px; line-height: 1.5;">Price for each file (in Rupiah). Auto-filled based on your saved <strong>Price Photo / Price Video</strong> in Profile. You can override it here before starting.</div>
                 </div>
 
                 <div style="background: #f7fafc; padding: 14px; border-radius: 6px; border-left: 3px solid #e53e3e;">
                     <div style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 14px;">🌲 FotoTree <span style="background: #e53e3e; color: white; padding: 1px 6px; border-radius: 3px; font-size: 10px; margin-left: 6px;">REQUIRED</span></div>
-                    <div style="color: #4a5568; font-size: 13px; line-height: 1.5;">Type at least 3 characters to search, then <strong>click on a result</strong> to select it.</div>
+                    <div style="color: #4a5568; font-size: 13px; line-height: 1.5;">The FotoTree destination for your uploads. Type at least 3 characters to search, then <strong>click a result</strong> to select it. Typing alone won't work — you must click.</div>
+                </div>
+
+                <div style="background: #f7fafc; padding: 14px; border-radius: 6px; border-left: 3px solid #a0aec0;">
+                    <div style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 14px;">📝 Deskripsi <span style="color: #a0aec0; font-size: 12px; font-weight: 400;">(optional)</span></div>
+                    <div style="color: #4a5568; font-size: 13px; line-height: 1.5;">A description that will be attached to every uploaded file in this session.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Autobot Section -->
+        <div style="margin-bottom: 24px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
+                <span style="font-size: 24px;">🤖</span>
+                <h3 style="margin: 0; color: #2d3748; font-size: 17px;">Alfred — Automatic Watcher <span style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; vertical-align: middle; margin-left: 6px;">PRO</span></h3>
+            </div>
+            <p style="color: #4a5568; font-size: 13px; margin-bottom: 16px; line-height: 1.6;">
+                Alfred watches your selected folder and automatically uploads new files the moment they appear — no button clicking required. Set it and forget it. <strong>Available for Pro subscribers only.</strong>
+            </p>
+
+            <div style="display: grid; gap: 10px;">
+
+                <div style="background: #f7fafc; padding: 14px; border-radius: 6px; border-left: 3px solid #4299e1;">
+                    <div style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 14px;">📁 Select Folder</div>
+                    <div style="color: #4a5568; font-size: 13px; line-height: 1.5;">The folder Autobot will monitor. Any new photo or video that appears in this folder will be automatically picked up and uploaded.</div>
+                </div>
+
+                <div style="background: #f7fafc; padding: 14px; border-radius: 6px; border-left: 3px solid #e53e3e;">
+                    <div style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 14px;">🔐 Password Fotoyu <span style="background: #e53e3e; color: white; padding: 1px 6px; border-radius: 3px; font-size: 10px; margin-left: 6px;">REQUIRED</span></div>
+                    <div style="color: #4a5568; font-size: 13px; line-height: 1.5;">Used by Autobot to log into Fotoyu for each upload cycle. Not stored.</div>
+                </div>
+
+                <div style="background: #f7fafc; padding: 14px; border-radius: 6px; border-left: 3px solid #e53e3e;">
+                    <div style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 14px;">💰 Harga Foto & Harga Video <span style="background: #e53e3e; color: white; padding: 1px 6px; border-radius: 3px; font-size: 10px; margin-left: 6px;">REQUIRED</span></div>
+                    <div style="color: #4a5568; font-size: 13px; line-height: 1.5;">Set separate prices for photos and videos. Autobot automatically detects the file type and applies the correct price. Auto-filled from your Profile settings.</div>
+                </div>
+
+                <div style="background: #f7fafc; padding: 14px; border-radius: 6px; border-left: 3px solid #e53e3e;">
+                    <div style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 14px;">🌲 FotoTree <span style="background: #e53e3e; color: white; padding: 1px 6px; border-radius: 3px; font-size: 10px; margin-left: 6px;">REQUIRED</span></div>
+                    <div style="color: #4a5568; font-size: 13px; line-height: 1.5;">The FotoTree all files will be uploaded to. Type to search and click a result to select. Autobot uses this same FotoTree for all upload cycles.</div>
+                </div>
+
+                <div style="background: #f7fafc; padding: 14px; border-radius: 6px; border-left: 3px solid #a0aec0;">
+                    <div style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 14px;">📝 Deskripsi <span style="color: #a0aec0; font-size: 12px; font-weight: 400;">(optional)</span></div>
+                    <div style="color: #4a5568; font-size: 13px; line-height: 1.5;">Description attached to every file Autobot uploads.</div>
+                </div>
+
+                <div style="background: #fff3cd; padding: 14px; border-radius: 6px; border-left: 3px solid #ed8936;">
+                    <div style="font-weight: 600; color: #2d3748; margin-bottom: 6px; font-size: 14px;">⚙️ How Alfred Works</div>
+                    <div style="color: #4a5568; font-size: 13px; line-height: 1.8;">
+                        1. Click <strong>Start Upload</strong> — Alfred begins monitoring the folder<br>
+                        2. It periodically scans for new files not yet uploaded<br>
+                        3. New files are uploaded automatically (photos and videos separately)<br>
+                        4. Click <strong>Stop Upload</strong> to stop monitoring at any time
+                    </div>
                 </div>
             </div>
         </div>
@@ -94,19 +151,18 @@ function getHelpContent() {
         <!-- Tips -->
         <div style="margin-bottom: 16px;">
             <h3 style="color: #2d3748; margin-bottom: 16px; font-size: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">💡 Tips & Best Practices</h3>
-
             <div style="display: grid; gap: 10px;">
                 <div style="background: #edf2f7; padding: 12px; border-radius: 6px; border-left: 3px solid #48bb78;">
-                    <div style="color: #2d3748; font-size: 13px;"><strong>✓ For Photos:</strong> Use batch size 10-50 and 2-3 concurrent bots for optimal speed</div>
+                    <div style="color: #2d3748; font-size: 13px;"><strong>✓ Save defaults in Profile:</strong> Set your Price Photo, Price Video, FotoTree, Concurrent Bot, and Batch Size in the Profile page so they auto-fill every time.</div>
                 </div>
                 <div style="background: #edf2f7; padding: 12px; border-radius: 6px; border-left: 3px solid #48bb78;">
-                    <div style="color: #2d3748; font-size: 13px;"><strong>✓ For Videos:</strong> Use batch size 5-10 and 1-2 concurrent bots</div>
+                    <div style="color: #2d3748; font-size: 13px;"><strong>✓ Start small:</strong> Run with 1 bot and a small batch first to verify everything works before scaling up.</div>
                 </div>
                 <div style="background: #edf2f7; padding: 12px; border-radius: 6px; border-left: 3px solid #48bb78;">
-                    <div style="color: #2d3748; font-size: 13px;"><strong>✓ Save Settings:</strong> Use <strong>Profile</strong> to save your common settings</div>
+                    <div style="color: #2d3748; font-size: 13px;"><strong>✓ Use Autobot for ongoing shoots:</strong> Leave Autobot running while you shoot — it'll upload new files automatically as you copy them to the folder.</div>
                 </div>
                 <div style="background: #fff3cd; padding: 12px; border-radius: 6px; border-left: 3px solid #ed8936;">
-                    <div style="color: #2d3748; font-size: 13px;"><strong>⚠️ Performance:</strong> More bots = faster but more CPU/memory usage</div>
+                    <div style="color: #2d3748; font-size: 13px;"><strong>⚠️ Performance:</strong> More concurrent bots = faster uploads but higher CPU & memory usage. Don't exceed what your machine can handle.</div>
                 </div>
             </div>
         </div>
