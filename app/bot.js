@@ -609,10 +609,10 @@ async function runMultiWindowUpload(params, log, isCancelled) {
         harga,
         deskripsi,
         fototree,
-        concurrentTabs
+        concurrentBot
     } = params;
 
-    const numWindows = concurrentTabs; // reuse concurrentTabs param, now means windows
+    const numWindows = concurrentBot; // reuse concurrentBot param, now means windows
 
     // Get files - either from filesToUpload or read from folder
     let files;
@@ -695,7 +695,7 @@ async function runBot(params, mainWindow, isCancelled) {
     const log = createLogger(mainWindow);
 
     try {
-        const concurrentWindows = params.concurrentTabs || 1;
+        const concurrentWindows = params.concurrentBot || 1;
         log(`Using ${concurrentWindows} concurrent browser window(s) for uploading`);
 
         // Run multi-window upload (each window manages its own browser instance)
