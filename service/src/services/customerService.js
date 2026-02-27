@@ -15,6 +15,10 @@ async function loginCustomer(username, password, deviceInfo = null, ipAddress = 
         throw Boom.unauthorized('Invalid credentials');
     }
 
+    if (!customer.subscriptionExpiredAt || new Date(customer.subscriptionExpiredAt) <= new Date()) {
+        throw Boom.unauthorized('Your subscription has expired. Please renew to continue.');
+    }
+
     // Check if customer already has an active session
     const existingSession = await getActiveSession(customer.username);
     if (existingSession) {
@@ -32,10 +36,11 @@ async function loginCustomer(username, password, deviceInfo = null, ipAddress = 
         username: customer.username,
         city: customer.city,
         whatsapp: customer.whatsapp,
-        price: customer.price,
+        pricePhoto: customer.pricePhoto,
+        priceVideo: customer.priceVideo,
         description: customer.description,
         fotoTree: customer.fotoTree,
-        concurrentTabs: customer.concurrentTabs,
+        concurrentBot: customer.concurrentBot,
         batchSize: customer.batchSize,
         subscriptionType: customer.subscriptionType,
         subscriptionExpiredAt: customer.subscriptionExpiredAt,

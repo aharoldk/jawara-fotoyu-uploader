@@ -114,10 +114,11 @@ async function updateOwnProfile(request, h) {
 
     // Only allow updating certain fields
     const allowedUpdates = {
-        price: request.payload.price,
+        pricePhoto: request.payload.pricePhoto,
+        priceVideo: request.payload.priceVideo,
         description: request.payload.description,
         fotoTree: request.payload.fotoTree,
-        concurrentTabs: request.payload.concurrentTabs,
+        concurrentBot: request.payload.concurrentBot,
         batchSize: request.payload.batchSize,
     };
 
@@ -138,10 +139,11 @@ async function updateOwnProfile(request, h) {
         username: customer.username,
         city: customer.city,
         whatsapp: customer.whatsapp,
-        price: customer.price,
+        pricePhoto: customer.pricePhoto,
+        priceVideo: customer.priceVideo,
         description: customer.description,
         fotoTree: customer.fotoTree,
-        concurrentTabs: customer.concurrentTabs,
+        concurrentBot: customer.concurrentBot,
         batchSize: customer.batchSize,
         subscriptionExpiredAt: customer.subscriptionExpiredAt,
         createdAt: customer.createdAt,
@@ -197,10 +199,11 @@ const updateCustomerValidation = Joi.object({
     username: Joi.string().optional(),
     city: Joi.string().allow('', null).optional(),
     whatsapp: Joi.string().allow('', null).optional(),
-    price: Joi.number().min(0).allow(null).optional(),
+    pricePhoto: Joi.number().min(0).allow(null).optional(),
+    priceVideo: Joi.number().min(0).allow(null).optional(),
     description: Joi.string().allow('', null).optional(),
     fotoTree: Joi.string().allow('', null).optional(),
-    concurrentTabs: Joi.number().integer().min(1).max(100).optional(),
+    concurrentBot: Joi.number().integer().min(1).max(1000).optional(),
     batchSize: Joi.number().integer().min(10).max(2000).optional(),
     subscriptionType: Joi.string().valid('Normal', 'Pro').optional(),
     subscriptionExpiredAt: Joi.date().allow(null).optional(),
@@ -212,10 +215,11 @@ const subscriptionValidation = Joi.object({
 });
 
 const customerProfileUpdateValidation = Joi.object({
-    price: Joi.number().min(0).allow(null).optional(),
+    pricePhoto: Joi.number().min(0).allow(null).optional(),
+    priceVideo: Joi.number().min(0).allow(null).optional(),
     description: Joi.string().allow('', null).optional(),
     password: Joi.string().min(8).optional(),
-    concurrentTabs: Joi.number().integer().min(1).max(100).optional(),
+    concurrentBot: Joi.number().integer().min(1).max(1000).optional(),
     batchSize: Joi.number().integer().min(10).max(2000).optional(),
     fotoTree: Joi.string().min(3).optional(),
 });

@@ -1,5 +1,6 @@
 const { verify } = require('./jwt');
-const { validateSession } = require('../repositories/sessionRepository');
+const { validateSession, invalidateAllSessions } = require('../repositories/sessionRepository');
+const { findCustomerById } = require('../repositories/customerRepository');
 
 // Middleware to check if user is authenticated admin
 const authMiddleware = async (request, h) => {
@@ -50,6 +51,21 @@ const customerAuthMiddleware = async (request, h) => {
             error: 'Session expired or invalid',
             message: 'Your session has been terminated. Please login again.',
             code: 'SESSION_EXPIRED'
+        }).code(401).takeover();
+    }
+
+    // Check subscription expiry
+    const customer = await findCustomerById(decoded.id);
+    if (!customer) {
+        return h.response({ error: 'Unauthorized', message: 'Customer not found.' }).code(401).takeover();
+    }
+
+    if (!customer.subscriptionExpiredAt || new Date(customer.subscriptionExpiredAt) <= new Date()) {
+        await invalidateAllSessions(decoded.username);
+        return h.response({
+            error: 'Subscription expired',
+            message: 'Your subscription has expired. Please renew to continue.',
+            code: 'SUBSCRIPTION_EXPIRED'
         }).code(401).takeover();
     }
 

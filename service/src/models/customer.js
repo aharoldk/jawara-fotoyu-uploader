@@ -18,10 +18,15 @@ const customerSchema = new mongoose.Schema({
         type: String,
         required: false,
     },
-    price: {
+    pricePhoto: {
         type: Number,
         required: false,
-        min: 50000
+        min: 0
+    },
+    priceVideo: {
+        type: Number,
+        required: false,
+        min: 0
     },
     description: {
         type: String,
@@ -33,7 +38,7 @@ const customerSchema = new mongoose.Schema({
         required: false,
         default: null,
     },
-    concurrentTabs: {
+    concurrentBot: {
         type: Number,
         required: false,
         default: 1,
