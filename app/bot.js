@@ -43,13 +43,39 @@ async function performLogin(page, params, log) {
 
     log('Opening Fotoyu login page...');
     await page.bringToFront();
-    await page.goto('https://www.fotoyu.com/login', {
-        waitUntil: 'domcontentloaded',
-        timeout: 60000
-    });
+
+    // Try navigation with retries and fallback strategies
+    const navigateWithRetry = async () => {
+        const strategies = [
+            { waitUntil: 'domcontentloaded', timeout: 60000 },
+            { waitUntil: 'commit', timeout: 60000 },
+            { waitUntil: 'load', timeout: 90000 },
+        ];
+
+        for (let attempt = 0; attempt < strategies.length; attempt++) {
+            const { waitUntil, timeout } = strategies[attempt];
+            try {
+                log(`Navigating to login page (attempt ${attempt + 1}, waitUntil: ${waitUntil})...`);
+                await page.goto('https://www.fotoyu.com/login', { waitUntil, timeout });
+                log('Login page loaded successfully');
+                return;
+            } catch (err) {
+                log(`Navigation attempt ${attempt + 1} failed: ${err.message}`, 'warning');
+                if (attempt < strategies.length - 1) {
+                    log('Retrying with different strategy...', 'warning');
+                    await page.waitForTimeout(3000);
+                } else {
+                    throw new Error(`Failed to navigate to login page after ${strategies.length} attempts: ${err.message}`);
+                }
+            }
+        }
+    };
+
+    await navigateWithRetry();
 
     log('Filling username...');
     const usernameInput = page.locator('input[type="text"], input[name="username"], input[placeholder*="username"]').first();
+    await usernameInput.waitFor({ state: 'visible', timeout: 30000 });
     await usernameInput.fill(username);
 
     log('Clicking Lanjut button...');
@@ -58,6 +84,7 @@ async function performLogin(page, params, log) {
 
     log('Filling password...');
     const passwordInput = page.locator('input[type="password"], input[name="password"]').first();
+    await passwordInput.waitFor({ state: 'visible', timeout: 15000 });
     await passwordInput.fill(password);
 
     log('Clicking Masuk button...');
@@ -65,7 +92,7 @@ async function performLogin(page, params, log) {
     await loginButton.click();
 
     log('Waiting for login to complete...');
-    await page.waitForURL(/fotoyu\.com\/(?!login)/, {timeout: 15000});
+    await page.waitForURL(/fotoyu\.com\/(?!login)/, { timeout: 30000 });
     log('Login successful!');
 }
 
@@ -75,19 +102,34 @@ async function performLogin(page, params, log) {
 async function navigateToUploadPage(page, username, log) {
     log('Navigating to profile page...');
 
-    try {
-        // Use 'domcontentloaded' instead of 'networkidle' for faster, more reliable loading
-        await page.goto(`https://www.fotoyu.com/profile/${username}?type=all`, {
-            waitUntil: 'domcontentloaded',
-            timeout: 60000 // 60 seconds timeout
-        });
-    } catch (error) {
-        if (error.message.includes('Timeout')) {
-            log('Page load slow, trying to continue anyway...', 'warning');
-            // Page may have loaded enough content, try to continue
-        } else {
-            throw error;
+    const strategies = [
+        { waitUntil: 'domcontentloaded', timeout: 60000 },
+        { waitUntil: 'commit', timeout: 60000 },
+        { waitUntil: 'load', timeout: 90000 },
+    ];
+
+    let navigated = false;
+    for (let attempt = 0; attempt < strategies.length; attempt++) {
+        const { waitUntil, timeout } = strategies[attempt];
+        try {
+            log(`Navigating to profile page (attempt ${attempt + 1}, waitUntil: ${waitUntil})...`);
+            await page.goto(`https://www.fotoyu.com/profile/${username}?type=all`, { waitUntil, timeout });
+            navigated = true;
+            break;
+        } catch (error) {
+            if (error.message.includes('Timeout')) {
+                log(`Navigation attempt ${attempt + 1} timed out, ${attempt < strategies.length - 1 ? 'retrying...' : 'trying to continue anyway...'}`, 'warning');
+                if (attempt < strategies.length - 1) {
+                    await page.waitForTimeout(3000);
+                }
+            } else {
+                throw error;
+            }
         }
+    }
+
+    if (!navigated) {
+        log('All navigation attempts timed out, trying to continue anyway...', 'warning');
     }
 
     log('Waiting for upload button...');
@@ -254,7 +296,7 @@ async function fillFotoTree(page, fototree, log) {
     const input = page.locator('input[placeholder*="FotoTree" i]').first();
     await input.waitFor({ state: 'visible' });
 
-    await input.fill(fototree, { delay: 80 });
+    await input.fill(fototree, { delay: 500 });
 
     // Wait for the exact visible text in dropdown
     const optionTitle = page.getByText(fototree, { exact: true });
@@ -562,26 +604,49 @@ async function processWindowBatches(page, windowId, batchQueue, params, metadata
 /**
  * Launch a separate browser window (its own browser instance + context),
  * perform login, and return { browser, context, page }.
+ * Retries up to 3 times on failure.
  */
 async function launchWindow(windowId, params, log) {
     log(`[Window ${windowId}] Launching separate browser window...`);
 
-    const browser = await chromium.launch({
-        headless: false,
-    });
+    const maxAttempts = 3;
 
-    const context = await browser.newContext({
-        viewport: null,
-        permissions: ['geolocation']
-    });
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        let browser = null;
+        let context = null;
 
-    const page = await context.newPage();
+        try {
+            browser = await chromium.launch({ headless: false });
 
-    log(`[Window ${windowId}] Browser window launched, performing login...`);
-    await performLogin(page, params, log);
-    log(`[Window ${windowId}] Login successful, window ready`);
+            context = await browser.newContext({
+                viewport: null,
+                permissions: ['geolocation']
+            });
 
-    return { browser, context, page };
+            const page = await context.newPage();
+
+            log(`[Window ${windowId}] Browser launched (attempt ${attempt}), performing login...`);
+            await performLogin(page, params, log);
+            log(`[Window ${windowId}] Login successful, window ready`);
+
+            return { browser, context, page };
+
+        } catch (error) {
+            log(`[Window ${windowId}] Launch/login attempt ${attempt} failed: ${error.message}`, 'warning');
+
+            // Clean up failed browser instance
+            try { if (context) await context.close(); } catch (_) {}
+            try { if (browser) await browser.close(); } catch (_) {}
+
+            if (attempt < maxAttempts) {
+                const delay = attempt * 5000;
+                log(`[Window ${windowId}] Retrying in ${delay / 1000}s...`, 'warning');
+                await new Promise(resolve => setTimeout(resolve, delay));
+            } else {
+                throw new Error(`[Window ${windowId}] Failed after ${maxAttempts} attempts: ${error.message}`);
+            }
+        }
+    }
 }
 
 /**
