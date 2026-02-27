@@ -191,6 +191,9 @@ const customerValidation = Joi.object({
     username: Joi.string().required(),
     city: Joi.string().allow('', null).optional(),
     whatsapp: Joi.string().allow('', null).optional(),
+    pricePhoto: Joi.number().min(0).allow(null).optional(),
+    priceVideo: Joi.number().min(0).allow(null).optional(),
+    concurrentBot: Joi.number().integer().min(1).max(1000).optional(),
     subscriptionType: Joi.string().valid('Normal', 'Pro').optional(),
     subscriptionExpiredAt: Joi.date().allow(null).optional(),
 });
